@@ -54,7 +54,7 @@
         height: 100%;
         object-fit: cover;
         mix-blend-mode: screen;
-        opacity: 0.8;
+        opacity: 0;
         transition: opacity 1s ease-out;
       }
 
@@ -85,10 +85,10 @@
       /* Анимация для плавного появления */
       @keyframes iceMelt {
         0% {
-          opacity: 1;
+          opacity: 0;
         }
         100% {
-          opacity: 0;
+          opacity: 1;
         }
       }
 
@@ -102,9 +102,9 @@
 
     <div id="camera-wrapper" onclick="changeFilter()">
       <video id="camera" autoplay playsinline muted></video>
-      <img class="overlay ice-layer" id="filter1" src="/assets/ice-1.png" />
-      <img class="overlay ice-layer" id="filter2" src="/assets/ice-2.png" />
-      <img class="overlay ice-layer" id="filter3" src="/assets/ice-4.png" />
+      <img class="overlay" id="filter1" src="/assets/ice-1.png" />
+      <img class="overlay" id="filter2" src="/assets/ice-2.png" />
+      <img class="overlay" id="filter3" src="/assets/ice-4.png" />
     </div>
 
     <p id="status">
@@ -118,13 +118,12 @@
       const refreshBtn = document.getElementById("refresh");
 
       const filters = [
-        document.getElementById("filter1"),
-        document.getElementById("filter2"),
-        document.getElementById("filter3"),
+        document.getElementById("filter1"), // ice-1
+        document.getElementById("filter2"), // ice-2
+        document.getElementById("filter3"), // ice-4
       ];
 
       let currentFilterIndex = 0;
-
       let currentStream;
 
       async function initCamera() {
@@ -156,14 +155,14 @@
       initCamera();
 
       function changeFilter() {
-        // Убираем предыдущий фильтр
-        filters[currentFilterIndex].classList.remove("ice-layer");
+        // Убираем предыдущий фильтр (снимаем анимацию)
+        filters[currentFilterIndex].style.opacity = 0;
 
         // Переходим к следующему фильтру
         currentFilterIndex = (currentFilterIndex + 1) % filters.length;
 
-        // Применяем новый фильтр
-        filters[currentFilterIndex].classList.add("ice-layer");
+        // Применяем новый фильтр с анимацией
+        filters[currentFilterIndex].style.opacity = 1;
       }
     </script>
   </body>
