@@ -55,6 +55,7 @@
         object-fit: cover;
         mix-blend-mode: screen;
         opacity: 0.8;
+        transition: opacity 1s ease-out;
       }
 
       #status {
@@ -80,24 +81,49 @@
         border-color: rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 0.05);
       }
+
+      /* Анимация для плавного появления */
+      @keyframes iceMelt {
+        0% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      .ice-layer {
+        animation: iceMelt 1s ease-in-out forwards;
+      }
     </style>
   </head>
   <body>
     <h1>Живой фильтр для камеры</h1>
 
-    <div id="camera-wrapper">
+    <div id="camera-wrapper" onclick="changeFilter()">
       <video id="camera" autoplay playsinline muted></video>
-      <img class="overlay" alt="Неоновый фильтр" src="/assets/ice-1.png" />
+      <img class="overlay ice-layer" id="filter1" src="/assets/ice-1.png" />
+      <img class="overlay ice-layer" id="filter2" src="/assets/ice-2.png" />
+      <img class="overlay ice-layer" id="filter3" src="/assets/ice-4.png" />
     </div>
 
     <p id="status">
       Браузеру нужен HTTPS (либо localhost) и разрешение на доступ к камере.
     </p>
     <button id="refresh">Запросить доступ заново</button>
+
     <script>
       const video = document.getElementById("camera");
       const statusEl = document.getElementById("status");
       const refreshBtn = document.getElementById("refresh");
+
+      const filters = [
+        document.getElementById("filter1"),
+        document.getElementById("filter2"),
+        document.getElementById("filter3"),
+      ];
+
+      let currentFilterIndex = 0;
 
       let currentStream;
 
@@ -128,6 +154,17 @@
 
       refreshBtn.addEventListener("click", initCamera);
       initCamera();
+
+      function changeFilter() {
+        // Убираем предыдущий фильтр
+        filters[currentFilterIndex].classList.remove("ice-layer");
+
+        // Переходим к следующему фильтру
+        currentFilterIndex = (currentFilterIndex + 1) % filters.length;
+
+        // Применяем новый фильтр
+        filters[currentFilterIndex].classList.add("ice-layer");
+      }
     </script>
   </body>
 </html>
