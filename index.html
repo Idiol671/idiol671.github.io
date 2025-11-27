@@ -102,9 +102,9 @@
 
     <div id="camera-wrapper" onclick="changeFilter()">
       <video id="camera" autoplay playsinline muted></video>
-      <img class="overlay" id="filter1" src="/assets/ice-1.png" />
-      <img class="overlay" id="filter2" src="/assets/ice-2.png" />
-      <img class="overlay" id="filter3" src="/assets/ice-4.png" />
+      <!-- Изображение с фильтром "лед" -->
+      <img class="overlay ice-layer" id="filter1" src="/assets/ice-1.png" />
+      <img class="overlay" id="filter2" src="/assets/ice-4.png" />
     </div>
 
     <p id="status">
@@ -117,13 +117,9 @@
       const statusEl = document.getElementById("status");
       const refreshBtn = document.getElementById("refresh");
 
-      const filters = [
-        document.getElementById("filter1"), // ice-1
-        document.getElementById("filter2"), // ice-2
-        document.getElementById("filter3"), // ice-4
-      ];
+      const filter1 = document.getElementById("filter1");
+      const filter2 = document.getElementById("filter2");
 
-      let currentFilterIndex = 0;
       let currentStream;
 
       async function initCamera() {
@@ -155,14 +151,13 @@
       initCamera();
 
       function changeFilter() {
-        // Убираем предыдущий фильтр (снимаем анимацию)
-        filters[currentFilterIndex].style.opacity = 0;
+        // Снимаем старый фильтр (не отображаем его)
+        filter1.style.opacity = 0;
 
-        // Переходим к следующему фильтру
-        currentFilterIndex = (currentFilterIndex + 1) % filters.length;
-
-        // Применяем новый фильтр с анимацией
-        filters[currentFilterIndex].style.opacity = 1;
+        // Плавно показываем новый фильтр (img-4)
+        setTimeout(() => {
+          filter2.style.opacity = 1;
+        }, 1000); // Задержка перед появлением второго фильтра
       }
     </script>
   </body>
