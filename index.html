@@ -81,20 +81,6 @@
         border-color: rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 0.05);
       }
-
-      /* Анимация для плавного появления */
-      @keyframes iceMelt {
-        0% {
-          opacity: 0;
-        }
-        100% {
-          opacity: 1;
-        }
-      }
-
-      .ice-layer {
-        animation: iceMelt 1s ease-in-out forwards;
-      }
     </style>
   </head>
   <body>
@@ -102,8 +88,9 @@
 
     <div id="camera-wrapper" onclick="changeFilter()">
       <video id="camera" autoplay playsinline muted></video>
-      <!-- Изображение с фильтром "лед" -->
-      <img class="overlay ice-layer" id="filter1" src="/assets/ice-1.png" />
+      <!-- Изначально отображаем фильтр ice-1 -->
+      <img class="overlay" id="filter1" src="/assets/ice-1.png" />
+      <!-- Скрытый фильтр ice-4, который будет показан после клика -->
       <img class="overlay" id="filter2" src="/assets/ice-4.png" />
     </div>
 
@@ -151,10 +138,10 @@
       initCamera();
 
       function changeFilter() {
-        // Снимаем старый фильтр (не отображаем его)
+        // Снимаем старый фильтр (ice-1) плавно
         filter1.style.opacity = 0;
 
-        // Плавно показываем новый фильтр (img-4)
+        // Плавно показываем второй фильтр (ice-4)
         setTimeout(() => {
           filter2.style.opacity = 1;
         }, 1000); // Задержка перед появлением второго фильтра
