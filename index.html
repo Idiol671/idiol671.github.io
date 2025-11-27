@@ -54,8 +54,11 @@
         height: 100%;
         object-fit: cover;
         mix-blend-mode: screen;
-        opacity: 0;
+        opacity: 1;
         transition: opacity 1s ease-out;
+      }
+      .overlay--2 {
+        opacity: 0;
       }
 
       #status {
@@ -91,7 +94,7 @@
       <!-- Изначально отображаем фильтр ice-1 -->
       <img class="overlay" id="filter1" src="/assets/ice-1.png" />
       <!-- Скрытый фильтр ice-4, который будет показан после клика -->
-      <img class="overlay" id="filter2" src="/assets/ice-4.png" />
+      <img class="overlay overlay--2" id="filter2" src="/assets/ice-4.png" />
     </div>
 
     <p id="status">
@@ -144,7 +147,7 @@
         // Плавно показываем второй фильтр (ice-4)
         setTimeout(() => {
           filter2.style.opacity = 1;
-        }, 1000); // Задержка перед появлением второго фильтра
+        }, 500); // Задержка перед появлением второго фильтра
       }
     </script>
   </body>
