@@ -1,81 +1,176 @@
-<div id="camera-wrapper">
-  <!-- Камера -->
-  <video id="cam" autoplay muted playsinline></video>
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <title>Модель</title>
 
-  <!-- Модель — ВСЕГДА видна и управляемая -->
-  <model-viewer
-    id="model"
-    src="./assets/horse_elements/SM_horse.gltf"
-    camera-controls
-    disable-zoom
-    ar
-    ar-modes="webxr scene-viewer quick-look"
-    style="pointer-events: auto">
-  </model-viewer>
-
-  <!-- Фильтр -->
-  <img class="overlay" id="filter1" src="/assets/ice-1.png" />
-</div>
-
-<script>
-  const video = document.getElementById("cam");
-
-  async function initCamera() {
-    try {
-      let stream;
-
-      // Сначала пробуем exact основной камеры
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {facingMode: {exact: "environment"}},
-          audio: false,
-        });
-      } catch (e) {
-        // fallback если exact не работает
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {facingMode: "environment"},
-          audio: false,
-        });
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        background-color: #050608;
+        color: #f4f5f7;
       }
 
-      video.srcObject = stream;
-    } catch (error) {
-      console.error("Ошибка камеры:", error);
-    }
-  }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        padding: 24px;
+      }
 
-  initCamera();
-</script>
+      h1 {
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        margin: 0;
+        text-align: center;
+      }
 
-<style>
-  #camera-wrapper {
-    position: relative;
-    width: 90vw;
-    aspect-ratio: 3/4;
-    overflow: hidden;
-    border-radius: 24px;
-  }
+      #camera-wrapper {
+        position: relative;
+        width: min(90vw, 640px);
+        aspect-ratio: 3 / 4;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #0d0f14;
+        box-shadow: 0 20px 60px rgba(6, 9, 20, 0.55);
+      }
 
-  #camera-wrapper > * {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+      video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        filter: saturate(1.1) contrast(1.05);
+      }
 
-  #cam {
-    z-index: 1;
-  }
+      model-viewer {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        background: transparent;
+      }
 
-  model-viewer {
-    z-index: 2;
-    background: transparent;
-  }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        mix-blend-mode: screen;
+        pointer-events: none;
+        z-index: 2;
+        opacity: 1;
+        transition: opacity 1s ease-out;
+      }
 
-  .overlay {
-    z-index: 3;
-    pointer-events: none;
-    mix-blend-mode: screen;
-  }
-</style>
+      .overlay--2 {
+        opacity: 0;
+      }
+
+      #status {
+        text-align: center;
+        font-size: 0.95rem;
+        color: #a1acc8;
+        max-width: 640px;
+      }
+
+      button {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        padding: 10px 24px;
+        background: transparent;
+        color: inherit;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: border-color 0.2s ease, color 0.2s ease,
+          background 0.2s ease;
+      }
+
+      button:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.05);
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Живой фильтр для камеры</h1>
+
+    <div id="camera-wrapper" onclick="changeFilter()">
+      <video id="cam" autoplay playsinline muted></video>
+
+      <model-viewer
+        id="model"
+        alt="3D Model"
+        src="./assets/horse_elements/SM_horse.gltf"
+        camera-controls
+        ar
+        ar-modes="webxr scene-viewer quick-look">
+      </model-viewer>
+
+      <img class="overlay" id="filter1" src="/assets/ice-1.png" />
+      <img class="overlay overlay--2" id="filter2" src="/assets/ice-4.png" />
+    </div>
+
+    <button id="refresh">Запросить доступ заново</button>
+
+    <script>
+      const video = document.getElementById("cam");
+      const filter1 = document.getElementById("filter1");
+      const filter2 = document.getElementById("filter2");
+      const statusEl = document.getElementById("status");
+      let currentStream;
+
+      async function initCamera() {
+        if (currentStream) {
+          currentStream.getTracks().forEach((track) => track.stop());
+        }
+
+        try {
+          let stream;
+
+          // 1 — пробуем exact (задняя главная камера)
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: {facingMode: {exact: "environment"}},
+              audio: false,
+            });
+          } catch {
+            // 2 — fallback
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: {facingMode: "environment"},
+              audio: false,
+            });
+          }
+
+          currentStream = stream;
+          video.srcObject = stream;
+        } catch (err) {
+          console.error("Ошибка камеры:", err);
+        }
+      }
+
+      initCamera();
+      document.getElementById("refresh").addEventListener("click", initCamera);
+
+      function changeFilter() {
+        filter1.style.opacity = 0;
+        setTimeout(() => {
+          filter2.style.opacity = 1;
+        }, 300);
+      }
+    </script>
+  </body>
+</html>
