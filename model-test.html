@@ -1,56 +1,50 @@
-<div id="camera-wrapper" onclick="activateModel()">
+<div id="camera-wrapper">
   <!-- Камера -->
   <video id="cam" autoplay muted playsinline></video>
 
-  <!-- Модель -->
+  <!-- Модель — ВСЕГДА видна и управляемая -->
   <model-viewer
     id="model"
     src="./assets/horse_elements/SM_horse.gltf"
     camera-controls
     disable-zoom
     ar
-    ar-modes="webxr scene-viewer quick-look">
+    ar-modes="webxr scene-viewer quick-look"
+    style="pointer-events: auto">
   </model-viewer>
 
-  <!-- Фильтры -->
+  <!-- Фильтр -->
   <img class="overlay" id="filter1" src="/assets/ice-1.png" />
-  <img class="overlay overlay--2" id="filter2" src="/assets/ice-4.png" />
 </div>
 
 <script>
   const video = document.getElementById("cam");
-  const modelViewer = document.getElementById("model");
-
-  const filter1 = document.getElementById("filter1");
-  const filter2 = document.getElementById("filter2");
-
-  let modelUnlocked = false;
 
   async function initCamera() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {facingMode: "user"},
-      audio: false,
-    });
+    try {
+      let stream;
 
-    video.srcObject = stream;
+      // Сначала пробуем exact основной камеры
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {facingMode: {exact: "environment"}},
+          audio: false,
+        });
+      } catch (e) {
+        // fallback если exact не работает
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {facingMode: "environment"},
+          audio: false,
+        });
+      }
+
+      video.srcObject = stream;
+    } catch (error) {
+      console.error("Ошибка камеры:", error);
+    }
   }
 
   initCamera();
-
-  function activateModel() {
-    if (modelUnlocked) return;
-
-    // Плавное исчезновение первого фильтра
-    filter1.style.opacity = 0;
-    setTimeout(() => {
-      filter2.style.opacity = 1;
-    }, 400);
-
-    // Разрешаем управление моделью
-    modelViewer.style.pointerEvents = "auto";
-
-    modelUnlocked = true;
-  }
 </script>
 
 <style>
@@ -58,8 +52,8 @@
     position: relative;
     width: min(90vw, 640px);
     aspect-ratio: 3/4;
-    border-radius: 24px;
     overflow: hidden;
+    border-radius: 24px;
   }
 
   #camera-wrapper > * {
@@ -70,29 +64,18 @@
     object-fit: cover;
   }
 
-  /* Зеркальная камера */
   #cam {
     z-index: 1;
-    transform: scaleX(-1);
   }
 
-  /* Model-viewer тоже зеркалим обратно */
   model-viewer {
     z-index: 2;
     background: transparent;
-    transform: scaleX(-1);
-    pointer-events: none; /* включим после клика */
   }
 
   .overlay {
     z-index: 3;
     pointer-events: none;
     mix-blend-mode: screen;
-    opacity: 1;
-    transition: opacity 1s ease-out;
-  }
-
-  .overlay--2 {
-    opacity: 0;
   }
 </style>
