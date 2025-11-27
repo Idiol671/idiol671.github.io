@@ -2,134 +2,73 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <title>AR + Фильтр</title>
     <script
       type="module"
       src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
     <style>
       body {
-        font-family: Arial, sans-serif;
-        background: #0d1117;
-        color: #fff;
         margin: 0;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
+        background: #000;
+        color: white;
+        font-family: sans-serif;
       }
 
       model-viewer {
         width: 100%;
-        max-width: 600px;
-        height: 500px;
-        background: #111;
+        height: 100vh;
+      }
+
+      #iceFilter {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+        mix-blend-mode: screen;
+        opacity: 0;
+        transition: 0.6s ease;
+      }
+
+      #btn {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 20px;
         border-radius: 12px;
-        overflow: hidden;
-      }
-
-      .btns {
-        display: flex;
-        gap: 15px;
-      }
-
-      button {
-        padding: 10px 18px;
-        font-size: 16px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        background: #1f6feb;
+        font-size: 18px;
+        background: rgba(0, 0, 0, 0.7);
         color: white;
-        transition: 0.2s;
-      }
-
-      button:hover {
-        background: #388bfd;
+        border: 1px solid #fff3;
       }
     </style>
   </head>
 
   <body>
-    <h2>3D модель + AR + ледяной фильтр</h2>
-
-    <!-- МОДЕЛЬ -->
     <model-viewer
-      id="viewer"
-      src="./assets/horse_elements/SM_horse.gltf"
+      id="mv"
+      src="./horse.glb"
       ar
-      ar-modes="webxr scene-viewer quick-look"
+      ar-modes="webxr"
       camera-controls
-      environment-image="neutral"
-      tone-mapping="neutral"
-      exposure="1.2"
-      shadow-intensity="1"
-      camera-target="0m 0m 0m"
-      camera-orbit="0deg 75deg 2m">
+      auto-rotate>
+      <!-- Перекрывающий AR фильтр -->
+      <div slot="ar-overlay">
+        <img id="iceFilter" src="/assets/ice-1.png" />
+        <button id="btn">Включить фильтр</button>
+      </div>
     </model-viewer>
 
-    <div class="btns">
-      <button id="iceFilterBtn">Ледяной фильтр</button>
-      <button id="normalBtn">Обычный вид</button>
-    </div>
-
     <script>
-      const viewer = document.querySelector("#viewer");
+      const filter = document.getElementById("iceFilter");
+      const btn = document.getElementById("btn");
 
-      // Используем фронтальную камеру
-      viewer.addEventListener("ar-status", (ev) => {
-        if (ev.detail.status === "session-started") {
-          const session = viewer.xrSession;
-
-          if (session) {
-            session.requestReferenceSpace("local");
-
-            const track = session?.system?.device?.features;
-
-            // Принудительное переключение на "user-facing" камеру
-            navigator.mediaDevices
-              .getUserMedia({
-                video: {facingMode: "user"},
-              })
-              .catch(() => {});
-          }
-        }
-      });
-
-      // Сохраняем оригинальный материал
-      viewer.addEventListener("load", async () => {
-        const material = await viewer.model.getMaterialByName("Material");
-        window.defaultPBR = {
-          baseColorFactor: material.pbrMetallicRoughness.baseColorFactor,
-          metallicFactor: material.pbrMetallicRoughness.metallicFactor,
-          roughnessFactor: material.pbrMetallicRoughness.roughnessFactor,
-        };
-      });
-
-      // Ледяной фильтр
-      document.getElementById("iceFilterBtn").onclick = async () => {
-        const material = await viewer.model.getMaterialByName("Material");
-
-        material.pbrMetallicRoughness.setBaseColorFactor([0.6, 0.8, 1.0, 1.0]);
-        material.pbrMetallicRoughness.metallicFactor = 1;
-        material.pbrMetallicRoughness.roughnessFactor = 0.1;
-
-        viewer.exposure = 1.7;
-        viewer.shadowIntensity = 0.4;
-      };
-
-      // Нормальный вид
-      document.getElementById("normalBtn").onclick = async () => {
-        const material = await viewer.model.getMaterialByName("Material");
-        const d = window.defaultPBR;
-
-        material.pbrMetallicRoughness.setBaseColorFactor(d.baseColorFactor);
-        material.pbrMetallicRoughness.metallicFactor = d.metallicFactor;
-        material.pbrMetallicRoughness.roughnessFactor = d.roughnessFactor;
-
-        viewer.exposure = 1.2;
-        viewer.shadowIntensity = 1;
+      btn.onclick = () => {
+        filter.style.opacity = filter.style.opacity === "1" ? "0" : "1";
+        btn.textContent =
+          filter.style.opacity === "1" ? "Выключить фильтр" : "Включить фильтр";
       };
     </script>
   </body>
