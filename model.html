@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <title>Модель</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        background-color: #050608;
+        color: #f4f5f7;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      h1 {
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        margin: 0;
+        text-align: center;
+      }
+
+      #camera-wrapper {
+        position: relative;
+        width: min(90vw, 640px);
+        aspect-ratio: 3 / 4;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #0d0f14;
+        box-shadow: 0 20px 60px rgba(6, 9, 20, 0.55);
+      }
+      .model {
+        width: 100%;
+        height: 100%;
+      }
+
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(1.1) contrast(1.05);
+      }
+
+      .overlay {
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        mix-blend-mode: screen;
+        opacity: 1;
+        transition: opacity 1s ease-out;
+      }
+      .overlay--2 {
+        opacity: 0;
+      }
+
+      #status {
+        text-align: center;
+        font-size: 0.95rem;
+        color: #a1acc8;
+        max-width: 640px;
+      }
+
+      button {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        padding: 10px 24px;
+        background: transparent;
+        color: inherit;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: border-color 0.2s ease, color 0.2s ease,
+          background 0.2s ease;
+      }
+
+      button:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.05);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Живой фильтр для камеры</h1>
+
+    <div id="camera-wrapper" onclick="changeFilter()">
+      <model-viewer
+        class="model"
+        id="camera"
+        alt="Neil Armstrong's Spacesuit from the Smithsonian Digitization Programs Office and National 	Air and Space Museum"
+        src="./assets/horse_elements/SM_horse.gltf"
+        enable-pan
+        ar-modes="webxr scene-viewer quick-look"
+        ar
+        camera-controls>
+      </model-viewer>
+      <!-- Изначально отображаем фильтр ice-1 -->
+      <img class="overlay" id="filter1" src="/assets/ice-1.png" />
+      <!-- Скрытый фильтр ice-4, который будет показан после клика -->
+      <img class="overlay overlay--2" id="filter2" src="/assets/ice-4.png" />
+    </div>
+
+    <button id="refresh">Запросить доступ заново</button>
+
+    <script>
+      const video = document.getElementById("camera");
+      const statusEl = document.getElementById("status");
+      const refreshBtn = document.getElementById("refresh");
+
+      const filter1 = document.getElementById("filter1");
+      const filter2 = document.getElementById("filter2");
+
+      let currentStream;
+
+      async function initCamera() {
+        statusEl.textContent = "Запрашиваем доступ к камере...";
+
+        if (currentStream) {
+          currentStream.getTracks().forEach((track) => track.stop());
+        }
+
+        try {
+          const constraints = {
+            audio: false,
+            video: {
+              facingMode: "user",
+            },
+          };
+
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          currentStream = stream;
+          video.srcObject = stream;
+          statusEl.textContent = "Фильтр активен. Наслаждайтесь!";
+        } catch (error) {
+          statusEl.textContent =
+            "Не удалось получить доступ к камере: " + error.message;
+        }
+      }
+
+      refreshBtn.addEventListener("click", initCamera);
+      initCamera();
+
+      function changeFilter() {
+        // Снимаем старый фильтр (ice-1) плавно
+        filter1.style.opacity = 0;
+
+        // Плавно показываем второй фильтр (ice-4)
+        setTimeout(() => {
+          filter2.style.opacity = 1;
+        }, 500); // Задержка перед появлением второго фильтра
+      }
+    </script>
+  </body>
+</html>
