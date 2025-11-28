@@ -102,9 +102,6 @@
         border-color: rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 0.05);
       }
-      #model::part(ar-button) {
-        display: none;
-      }
     </style>
   </head>
 
@@ -128,13 +125,10 @@
 
     <button id="refresh">Запросить доступ заново</button>
 
-    <!-- <button class="custom-ar-btn" id="arStart">Открыть AR</button> -->
-
     <script>
       const video = document.getElementById("cam");
       const filter1 = document.getElementById("filter1");
       const filter2 = document.getElementById("filter2");
-      const statusEl = document.getElementById("status");
       let currentStream;
 
       async function initCamera() {
@@ -144,15 +138,12 @@
 
         try {
           let stream;
-
-          // 1 — пробуем exact (задняя главная камера)
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: {facingMode: {exact: "environment"}},
               audio: false,
             });
           } catch {
-            // 2 — fallback
             stream = await navigator.mediaDevices.getUserMedia({
               video: {facingMode: "environment"},
               audio: false,
@@ -175,13 +166,6 @@
           filter2.style.opacity = 1;
         }, 300);
       }
-
-      const model = document.querySelector("#model");
-      const btn = document.querySelector("#arStart");
-
-      btn.addEventListener("click", () => {
-        model.enterAR();
-      });
     </script>
   </body>
 </html>
