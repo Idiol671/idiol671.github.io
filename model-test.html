@@ -102,6 +102,9 @@
         border-color: rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 0.05);
       }
+      #model::part(ar-button) {
+        display: none;
+      }
     </style>
   </head>
 
@@ -119,12 +122,13 @@
         ar
         ar-modes="webxr scene-viewer quick-look">
       </model-viewer>
-
       <img class="overlay" id="filter1" src="/assets/ice-1.png" />
       <img class="overlay overlay--2" id="filter2" src="/assets/ice-4.png" />
     </div>
 
     <button id="refresh">Запросить доступ заново</button>
+
+    <button class="custom-ar-btn" id="arStart">Открыть AR</button>
 
     <script>
       const video = document.getElementById("cam");
@@ -171,6 +175,13 @@
           filter2.style.opacity = 1;
         }, 300);
       }
+
+      const model = document.querySelector("#model");
+      const btn = document.querySelector("#arStart");
+
+      btn.addEventListener("click", () => {
+        model.enterAR();
+      });
     </script>
   </body>
 </html>
