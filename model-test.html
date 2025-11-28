@@ -3,17 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <script
       type="module"
       src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-
-    <title>Модель + AR</title>
+    <title>Модель</title>
 
     <style>
       :root {
         color-scheme: dark;
-        font-family: "Inter", "Segoe UI", system-ui, -apple-system;
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
         background-color: #050608;
         color: #f4f5f7;
       }
@@ -27,6 +25,12 @@
         justify-content: center;
         gap: 24px;
         padding: 24px;
+      }
+
+      h1 {
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        margin: 0;
+        text-align: center;
       }
 
       #camera-wrapper {
@@ -46,6 +50,7 @@
         height: 100%;
         object-fit: cover;
         z-index: 0;
+        filter: saturate(1.1) contrast(1.05);
       }
 
       model-viewer {
@@ -57,62 +62,97 @@
         background: transparent;
       }
 
-      model-viewer::part(ar-button) {
-        display: none; /* отключаем стандартную кнопку */
+      .overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        mix-blend-mode: screen;
+        pointer-events: none;
+        z-index: 2;
+        opacity: 1;
+        transition: opacity 1s ease-out;
       }
 
-      .custom-ar-btn {
+      .overlay--2 {
+        opacity: 0;
+      }
+
+      #status {
+        text-align: center;
+        font-size: 0.95rem;
+        color: #a1acc8;
+        max-width: 640px;
+      }
+
+      button {
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 999px;
         padding: 10px 24px;
-        background: #111;
-        color: #fff;
+        background: transparent;
+        color: inherit;
+        font-size: 0.95rem;
         cursor: pointer;
-        font-size: 16px;
+        transition: border-color 0.2s ease, color 0.2s ease,
+          background 0.2s ease;
+      }
+
+      button:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      #model::part(ar-button) {
+        display: none;
       }
     </style>
   </head>
 
   <body>
-    <h1>Живой фильтр + AR</h1>
+    <h1>Живой фильтр для камеры</h1>
 
-    <div id="camera-wrapper">
+    <div id="camera-wrapper" onclick="changeFilter()">
       <video id="cam" autoplay playsinline muted></video>
 
       <model-viewer
         id="model"
         alt="3D Model"
         src="./assets/model/Horse_animation.gltf"
-        ios-src="./assets/model/Horse_animation.usdz"
         camera-controls
-        disable-tap
-        exposure="1"
         ar
-        ar-modes="webxr scene-viewer quick-look"
-        quick-look-browsers="safari"
-        interaction-prompt="none">
+        ar-modes="webxr scene-viewer quick-look">
       </model-viewer>
+      <img class="overlay" id="filter1" src="/assets/ice-1.png" />
+      <img class="overlay overlay--2" id="filter2" src="/assets/ice-4.png" />
     </div>
+
+    <button id="refresh">Запросить доступ заново</button>
 
     <button class="custom-ar-btn" id="arStart">Открыть AR</button>
 
     <script>
-      /* ---------- Камера ---------- */
       const video = document.getElementById("cam");
+      const filter1 = document.getElementById("filter1");
+      const filter2 = document.getElementById("filter2");
+      const statusEl = document.getElementById("status");
       let currentStream;
 
       async function initCamera() {
-        if (currentStream) currentStream.getTracks().forEach((t) => t.stop());
+        if (currentStream) {
+          currentStream.getTracks().forEach((track) => track.stop());
+        }
 
         try {
           let stream;
 
+          // 1 — пробуем exact (задняя главная камера)
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: {facingMode: {exact: "environment"}},
               audio: false,
             });
           } catch {
+            // 2 — fallback
             stream = await navigator.mediaDevices.getUserMedia({
               video: {facingMode: "environment"},
               audio: false,
@@ -121,29 +161,25 @@
 
           currentStream = stream;
           video.srcObject = stream;
-        } catch (e) {
-          console.error("Камера недоступна:", e);
+        } catch (err) {
+          console.error("Ошибка камеры:", err);
         }
       }
 
       initCamera();
+      document.getElementById("refresh").addEventListener("click", initCamera);
 
-      /* ---------- AR кнопка ---------- */
+      function changeFilter() {
+        filter1.style.opacity = 0;
+        setTimeout(() => {
+          filter2.style.opacity = 1;
+        }, 300);
+      }
 
-      const model = document.getElementById("model");
-      const btn = document.getElementById("arStart");
-
-      let modelReady = false;
-
-      model.addEventListener("load", () => {
-        modelReady = true;
-      });
+      const model = document.querySelector("#model");
+      const btn = document.querySelector("#arStart");
 
       btn.addEventListener("click", () => {
-        if (!modelReady) {
-          console.warn("Модель ещё загружается...");
-          return;
-        }
         model.enterAR();
       });
     </script>
