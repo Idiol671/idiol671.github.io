@@ -51,14 +51,10 @@
 
       #camera-video {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        min-width: 100%;
-        min-height: 100%;
-        width: auto;
-        height: auto;
+        width: 100%;
+        height: 100%;
         object-fit: cover;
+        transform: scaleX(1); /* Убираем трансформацию translate */
       }
 
       #renderCanvas {
@@ -238,38 +234,42 @@
 
       // Инициализация Three.js
       function initThreeJS() {
-        // Сцена - прозрачная
+        // Сцена
         scene = new THREE.Scene();
-        scene.background = null;
 
-        // Камера Three.js
+        // Камера Three.js - настраиваем под вертикальную ориентацию
         camera = new THREE.PerspectiveCamera(
-          50, // Меньший угол обзора
+          60,
           canvas.clientWidth / canvas.clientHeight,
           0.1,
           100
         );
-        camera.position.set(0, 0, 5);
+        camera.position.set(0, 0, 3);
 
-        // Рендерер
+        // Рендерер с прозрачным фоном
         renderer = new THREE.WebGLRenderer({
           canvas: canvas,
-          alpha: true, // Прозрачный фон
+          alpha: true,
           antialias: true,
           preserveDrawingBuffer: true,
         });
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.xr.enabled = true;
-        renderer.setClearColor(0x000000, 0); // Полностью прозрачный
+        renderer.setClearColor(0x000000, 0);
 
         // Освещение
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
         scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(2, 3, 4);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(1, 2, 3);
         scene.add(directionalLight);
+
+        // Еще один источник света спереди
+        const frontLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        frontLight.position.set(0, 0, 5);
+        scene.add(frontLight);
 
         clock = new THREE.Clock();
       }
@@ -282,11 +282,11 @@
           "./assets/model/Horse_animation.gltf",
           (gltf) => {
             model = gltf.scene;
-            model.scale.set(0.5, 0.5, 0.5);
-            model.position.set(0, -0.8, -1.5); // Ближе к камере
+            model.scale.set(0.8, 0.8, 0.8);
+            model.position.set(0, -1.2, 0); // Ближе к камере
 
-            // Поворачиваем модель
-            model.rotation.y = Math.PI / 3;
+            // Поворачиваем модель для лучшего вида
+            model.rotation.y = Math.PI / 6;
 
             scene.add(model);
 
@@ -298,29 +298,79 @@
 
             status.textContent =
               "Модель загружена. Нажмите на экран для смены фильтра.";
+            console.log("Модель загружена");
           },
-          undefined,
+          (progress) => {
+            const percent = ((progress.loaded / progress.total) * 100).toFixed(
+              1
+            );
+            status.textContent = `Загрузка модели: ${percent}%`;
+          },
           (error) => {
             console.error("Ошибка загрузки модели:", error);
+            status.textContent =
+              "Ошибка загрузки модели. Создаю тестовую модель...";
             createTestModel();
           }
         );
       }
 
       function createTestModel() {
-        const geometry = new THREE.SphereGeometry(0.5, 32, 32);
-        const material = new THREE.MeshBasicMaterial({
+        // Создаем яркую тестовую модель
+        const group = new THREE.Group();
+
+        // Основное тело
+        const bodyGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const bodyMaterial = new THREE.MeshBasicMaterial({
           color: 0xff0000,
           transparent: true,
-          opacity: 0.8,
+          opacity: 0.9,
         });
-        model = new THREE.Mesh(geometry, material);
-        model.position.set(0, 0, -1.5);
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = 0.2;
+        group.add(body);
+
+        // Голова
+        const headGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+        const headMaterial = new THREE.MeshBasicMaterial({
+          color: 0x00ff00,
+          transparent: true,
+          opacity: 0.9,
+        });
+        const head = new THREE.Mesh(headGeometry, headMaterial);
+        head.position.set(0, 0.6, 0.3);
+        group.add(head);
+
+        // Ноги
+        const legGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.4, 8);
+        const legMaterial = new THREE.MeshBasicMaterial({
+          color: 0x0000ff,
+          transparent: true,
+          opacity: 0.9,
+        });
+
+        const positions = [
+          [-0.2, -0.3, 0.15],
+          [0.2, -0.3, 0.15],
+          [-0.2, -0.3, -0.15],
+          [0.2, -0.3, -0.15],
+        ];
+
+        positions.forEach((pos) => {
+          const leg = new THREE.Mesh(legGeometry, legMaterial);
+          leg.position.set(pos[0], pos[1], pos[2]);
+          group.add(leg);
+        });
+
+        model = group;
+        model.scale.set(1.2, 1.2, 1.2);
+        model.position.set(0, -0.5, 0);
         scene.add(model);
-        status.textContent = "Тестовая модель загружена";
+
+        console.log("Тестовая модель создана");
       }
 
-      // Инициализация камеры устройства (простой подход)
+      // Инициализация камеры устройства
       async function initCamera() {
         try {
           // Останавливаем предыдущий поток
@@ -335,8 +385,8 @@
           let constraints = {
             video: {
               facingMode: {exact: "environment"},
-              width: {ideal: 1280},
-              height: {ideal: 720},
+              width: {ideal: 1920},
+              height: {ideal: 1080},
             },
             audio: false,
           };
@@ -363,9 +413,7 @@
 
           status.textContent =
             "Камера активирована. Нажмите на экран для смены фильтра.";
-
-          // Адаптируем видео под размер контейнера
-          adjustVideoSize();
+          console.log("Камера активирована");
         } catch (error) {
           console.error("Ошибка камеры:", error);
           status.textContent = "Ошибка доступа к камере. Проверьте разрешения.";
@@ -373,109 +421,102 @@
           // Показываем тестовый фон
           cameraVideo.style.display = "none";
           document.getElementById("video-container").style.backgroundColor =
-            "#333";
+            "#222";
         }
-      }
-
-      // Адаптация размера видео
-      function adjustVideoSize() {
-        const container = document.getElementById("video-container");
-        const video = cameraVideo;
-
-        // Сброс стилей
-        video.style.minWidth = "100%";
-        video.style.minHeight = "100%";
-        video.style.width = "auto";
-        video.style.height = "auto";
-        video.style.objectFit = "cover";
-        video.style.transform = "translate(-50%, -50%)";
-
-        // Убедимся что видео занимает весь контейнер
-        setTimeout(() => {
-          const containerRatio = container.clientWidth / container.clientHeight;
-
-          if (video.videoWidth && video.videoHeight) {
-            const videoRatio = video.videoWidth / video.videoHeight;
-
-            if (videoRatio > containerRatio) {
-              // Видео шире контейнера
-              video.style.width = "100%";
-              video.style.height = "auto";
-            } else {
-              // Видео уже контейнера
-              video.style.width = "auto";
-              video.style.height = "100%";
-            }
-          }
-        }, 100);
       }
 
       // Инициализация AR
       function initAR() {
         if (!navigator.xr) {
+          console.log("WebXR не поддерживается");
           arButtonContainer.style.display = "none";
           status.textContent += " (WebXR не поддерживается)";
           return;
         }
 
-        const button = ARButton.createButton(renderer, {
-          requiredFeatures: ["hit-test"],
-          optionalFeatures: ["dom-overlay"],
-          domOverlay: {root: document.body},
-        });
+        console.log("Инициализация WebXR...");
 
-        button.textContent = "Посмотреть в AR";
-        button.classList.add("ar-button");
-        arButtonContainer.replaceWith(button);
+        // Проверяем поддержку AR
+        navigator.xr
+          .isSessionSupported("immersive-ar")
+          .then((supported) => {
+            if (!supported) {
+              console.log("AR не поддерживается");
+              arButtonContainer.style.display = "none";
+              return;
+            }
 
-        // Начало AR сессии
-        renderer.xr.addEventListener("sessionstart", () => {
-          console.log("AR сессия началась");
-          isARMode = true;
-          closedAr.style.display = "none";
+            console.log("AR поддерживается");
 
-          // Скрываем фильтры и видео камеры
-          filter1.style.display = "none";
-          filter2.style.display = "none";
-          cameraVideo.style.display = "none";
-          document.getElementById("video-container").style.backgroundColor =
-            "transparent";
+            const button = ARButton.createButton(renderer, {
+              requiredFeatures: ["hit-test"],
+              optionalFeatures: ["dom-overlay"],
+              domOverlay: {root: document.body},
+            });
 
-          // Останавливаем камеру устройства
-          if (currentStream) {
-            currentStream.getTracks().forEach((track) => track.stop());
-            currentStream = null;
-          }
+            button.textContent = "Посмотреть в AR";
+            button.classList.add("ar-button");
+            arButtonContainer.replaceWith(button);
 
-          // Меняем масштаб модели для AR
-          if (model) {
-            model.scale.set(0.15, 0.15, 0.15);
-            model.position.set(0, 0, 0);
-          }
-        });
+            // Начало AR сессии
+            renderer.xr.addEventListener("sessionstart", () => {
+              console.log("AR сессия началась");
+              isARMode = true;
+              closedAr.style.display = "none";
 
-        // Конец AR сессии
-        renderer.xr.addEventListener("sessionend", () => {
-          console.log("AR сессия завершена");
-          isARMode = false;
-          closedAr.style.display = "block";
+              // Скрываем фильтры и видео камеры
+              filter1.style.display = "none";
+              filter2.style.display = "none";
+              cameraVideo.style.display = "none";
+              document.getElementById("video-container").style.backgroundColor =
+                "transparent";
 
-          // Показываем фильтры и видео
-          filter1.style.display = "block";
-          filter2.style.display = "block";
-          cameraVideo.style.display = "block";
-          document.getElementById("video-container").style.backgroundColor =
-            "transparent";
+              // Останавливаем камеру устройства
+              if (currentStream) {
+                currentStream.getTracks().forEach((track) => track.stop());
+                currentStream = null;
+              }
 
-          // Возвращаем модель
-          if (model) {
-            model.scale.set(0.5, 0.5, 0.5);
-            model.position.set(0, -0.8, -1.5);
-          }
+              // Меняем масштаб модели для AR
+              if (model) {
+                model.scale.set(0.2, 0.2, 0.2);
+                model.position.set(0, 0, 0);
+              }
 
-          // Перезапускаем камеру устройства
-          setTimeout(initCamera, 100);
-        });
+              status.textContent = "AR режим активирован";
+            });
+
+            // Конец AR сессии
+            renderer.xr.addEventListener("sessionend", () => {
+              console.log("AR сессия завершена");
+              isARMode = false;
+              closedAr.style.display = "block";
+
+              // Показываем фильтры и видео
+              filter1.style.display = "block";
+              filter2.style.display = "block";
+              cameraVideo.style.display = "block";
+              document.getElementById("video-container").style.backgroundColor =
+                "transparent";
+
+              // Возвращаем модель
+              if (model) {
+                model.scale.set(0.8, 0.8, 0.8);
+                model.position.set(0, -1.2, 0);
+              }
+
+              // Перезапускаем камеру устройства
+              setTimeout(() => {
+                initCamera();
+              }, 100);
+
+              status.textContent = "AR режим завершен";
+            });
+          })
+          .catch((error) => {
+            console.error("Ошибка проверки поддержки AR:", error);
+            arButtonContainer.style.display = "none";
+          });
       }
 
       // Переключение фильтров (только один раз!)
@@ -485,6 +526,8 @@
         filterClicked = true;
         filter1.style.opacity = "0";
         filter2.style.opacity = "1";
+
+        console.log("Фильтр изменен на фильтр 2");
 
         // Меняем курсор чтобы показать что клик больше не работает
         canvas.style.cursor = "default";
@@ -497,61 +540,63 @@
       function takeScreenshot() {
         // Скрываем кнопки на время скриншота
         const arButton = document.querySelector(".ar-button");
-        arButton.style.visibility = "hidden";
-        screenshotBtn.style.visibility = "hidden";
+        const buttonsHidden = arButton && screenshotBtn;
 
-        // Создаем временный canvas для объединения видео и 3D
+        if (buttonsHidden) {
+          arButton.style.visibility = "hidden";
+          screenshotBtn.style.visibility = "hidden";
+        }
+
+        // Создаем временный canvas
         setTimeout(() => {
           const tempCanvas = document.createElement("canvas");
           tempCanvas.width = canvas.width;
           tempCanvas.height = canvas.height;
           const ctx = tempCanvas.getContext("2d");
 
-          // 1. Рисуем видео
-          if (cameraVideo.videoWidth > 0) {
-            // Вычисляем размеры для рисования видео
-            const videoRatio = cameraVideo.videoWidth / cameraVideo.videoHeight;
-            const canvasRatio = canvas.width / canvas.height;
+          // Рисуем черный фон
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-            let sourceX = 0,
-              sourceY = 0;
-            let sourceWidth = cameraVideo.videoWidth;
-            let sourceHeight = cameraVideo.videoHeight;
+          // Рисуем видео с камеры
+          if (cameraVideo.videoWidth > 0) {
+            // Вычисляем размеры для заполнения canvas
+            const videoRatio = cameraVideo.videoWidth / cameraVideo.videoHeight;
+            const canvasRatio = tempCanvas.width / tempCanvas.height;
+
+            let drawWidth, drawHeight, offsetX, offsetY;
 
             if (videoRatio > canvasRatio) {
               // Видео шире canvas
-              sourceWidth = cameraVideo.videoHeight * canvasRatio;
-              sourceX = (cameraVideo.videoWidth - sourceWidth) / 2;
+              drawHeight = tempCanvas.height;
+              drawWidth = drawHeight * videoRatio;
+              offsetX = (tempCanvas.width - drawWidth) / 2;
+              offsetY = 0;
             } else {
               // Видео уже canvas
-              sourceHeight = cameraVideo.videoWidth / canvasRatio;
-              sourceY = (cameraVideo.videoHeight - sourceHeight) / 2;
+              drawWidth = tempCanvas.width;
+              drawHeight = drawWidth / videoRatio;
+              offsetX = 0;
+              offsetY = (tempCanvas.height - drawHeight) / 2;
             }
 
-            ctx.drawImage(
-              cameraVideo,
-              sourceX,
-              sourceY,
-              sourceWidth,
-              sourceHeight,
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
+            ctx.drawImage(cameraVideo, offsetX, offsetY, drawWidth, drawHeight);
           }
 
-          // 2. Поверх рисуем 3D сцену
+          // Поверх рисуем 3D сцену
           ctx.drawImage(canvas, 0, 0);
 
-          // 3. Поверх рисуем фильтры
-          if (filter1.style.opacity === "1") {
-            ctx.globalCompositeOperation = "screen";
-            ctx.drawImage(filter1, 0, 0, canvas.width, canvas.height);
-          } else {
-            ctx.globalCompositeOperation = "screen";
-            ctx.drawImage(filter2, 0, 0, canvas.width, canvas.height);
-          }
+          // Поверх рисуем активный фильтр
+          const activeFilter =
+            filter1.style.opacity === "1" ? filter1 : filter2;
+          ctx.globalCompositeOperation = "screen";
+          ctx.drawImage(
+            activeFilter,
+            0,
+            0,
+            tempCanvas.width,
+            tempCanvas.height
+          );
 
           // Создаем ссылку для скачивания
           const dataURL = tempCanvas.toDataURL("image/png");
@@ -569,8 +614,10 @@
           }, 2000);
 
           // Возвращаем кнопки
-          arButton.style.visibility = "visible";
-          screenshotBtn.style.visibility = "visible";
+          if (buttonsHidden) {
+            arButton.style.visibility = "visible";
+            screenshotBtn.style.visibility = "visible";
+          }
         }, 100);
       }
 
@@ -578,12 +625,14 @@
       function animate() {
         requestAnimationFrame(animate);
 
+        // Обновляем анимацию модели
         if (mixer) {
           mixer.update(clock.getDelta());
         }
 
+        // Медленно вращаем модель в обычном режиме
         if (model && !isARMode) {
-          model.rotation.y += 0.005;
+          model.rotation.y += 0.003;
         }
 
         renderer.render(scene, camera);
@@ -594,17 +643,24 @@
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-
-        adjustVideoSize();
       }
 
       // Инициализация
       async function init() {
         try {
+          console.log("Инициализация Three.js...");
           initThreeJS();
+
+          console.log("Инициализация камеры...");
           await initCamera();
+
+          console.log("Загрузка модели...");
           loadModel();
+
+          console.log("Инициализация AR...");
           initAR();
+
+          console.log("Запуск анимации...");
           animate();
 
           // События
@@ -615,6 +671,8 @@
 
           // Изначальный курсор
           canvas.style.cursor = "pointer";
+
+          console.log("Приложение инициализировано");
         } catch (error) {
           console.error("Ошибка инициализации:", error);
           status.textContent = "Ошибка инициализации: " + error.message;
