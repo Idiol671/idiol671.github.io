@@ -42,6 +42,7 @@
         overflow: hidden;
         background: #0d0f14;
         box-shadow: 0 20px 60px rgba(6, 9, 20, 0.55);
+        cursor: pointer;
       }
 
       video {
@@ -62,20 +63,10 @@
         z-index: 1;
         background: transparent;
         --poster-color: transparent;
-        pointer-events: none; /* По умолчанию блокируем клики */
+        pointer-events: none; /* Блокируем клики по модели */
       }
 
-      /* Когда достигнут последний фильтр, разблокируем модель */
-      model-viewer.interactive {
-        pointer-events: auto;
-        cursor: grab;
-      }
-
-      model-viewer.interactive:active {
-        cursor: grabbing;
-      }
-
-      /* Разрешаем клики только по AR кнопке всегда */
+      /* Разрешаем клики только по AR кнопке */
       model-viewer::part(default-ar-button) {
         pointer-events: auto;
         position: absolute;
@@ -110,21 +101,6 @@
       model-viewer::part(default-ar-button):focus {
         outline: 2px solid rgba(102, 126, 234, 0.5);
         outline-offset: 2px;
-      }
-
-      /* Контейнер для кликов по фильтрам */
-      .filter-click-area {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 3;
-        cursor: pointer;
-      }
-
-      /* Когда достигнут последний фильтр, скрываем область кликов */
-      .filter-click-area.disabled {
-        display: none;
       }
 
       .overlay {
@@ -261,16 +237,6 @@
         text-align: center;
         height: 24px;
       }
-
-      .model-unlocked-message {
-        font-size: 0.9rem;
-        color: #81c784;
-        margin-top: 4px;
-        text-align: center;
-        height: 20px;
-        font-style: italic;
-        display: none;
-      }
     </style>
   </head>
 
@@ -283,15 +249,13 @@
       <model-viewer
         id="model"
         alt="3D Model"
-        src="./assets/model/Horse_animation.gltf"
+        src="./assets/model-2/T-Rex.glb"
         camera-controls
         ar
         ar-modes="webxr scene-viewer quick-look"
         autoplay>
+        <!-- Кнопка AR теперь стилизуется через CSS части -->
       </model-viewer>
-
-      <!-- Область для кликов по фильтрам -->
-      <div class="filter-click-area" id="filterClickArea"></div>
 
       <!-- Все фильтры изначально скрыты -->
       <img class="overlay active" id="filter1" src="/assets/ice-1.png" />
@@ -300,9 +264,6 @@
     </div>
 
     <div class="filter-indicator" id="currentFilterText">Фильтр: Ice 1</div>
-    <div class="model-unlocked-message" id="modelUnlockedMessage">
-      ✓ Модель разблокирована для взаимодействия
-    </div>
 
     <button id="refresh">Перезагрузить камеру</button>
 
@@ -326,12 +287,7 @@
       const filter1 = document.getElementById("filter1");
       const filter2 = document.getElementById("filter2");
       const filter3 = document.getElementById("filter3");
-      const filterClickArea = document.getElementById("filterClickArea");
-      const modelViewer = document.getElementById("model");
       const currentFilterText = document.getElementById("currentFilterText");
-      const modelUnlockedMessage = document.getElementById(
-        "modelUnlockedMessage"
-      );
       const arExitModal = document.getElementById("arExitModal");
       const closeModalBtn = document.getElementById("closeModalBtn");
       let currentStream;
@@ -381,6 +337,12 @@
       }
 
       function changeFilter() {
+        // Проверяем, достигли ли последнего фильтра (Ice-4)
+        if (currentFilterIndex === filters.length - 1) {
+          console.log("Финальный фильтр Ice-4 активирован");
+          return; // Не делаем ничего, если уже на последнем фильтре
+        }
+
         // Убираем активный класс с текущего фильтра
         filters[currentFilterIndex].classList.remove("active");
 
@@ -396,35 +358,6 @@
         console.log(
           `Переключено на фильтр: ${filterNames[currentFilterIndex]}`
         );
-
-        // Проверяем, достигли ли последнего фильтра (Ice-4)
-        if (currentFilterIndex === filters.length - 1) {
-          // Достигли последнего фильтра - разблокируем модель
-          unlockModel();
-        }
-      }
-
-      function unlockModel() {
-        console.log(
-          "Достигнут финальный фильтр. Разблокируем модель для взаимодействия."
-        );
-
-        // Разблокируем модель
-        modelViewer.classList.add("interactive");
-
-        // Отключаем область кликов для фильтров
-        filterClickArea.classList.add("disabled");
-
-        // Показываем сообщение о разблокировке модели
-        modelUnlockedMessage.style.display = "block";
-
-        // Меняем заголовок
-        currentFilterText.textContent = `Фильтр: ${filterNames[currentFilterIndex]} (Финальный)`;
-
-        // Добавляем обработчик изменения размера модели
-        modelViewer.addEventListener("load", () => {
-          console.log("Модель загружена и готова к взаимодействию");
-        });
       }
 
       function showExitModal() {
@@ -468,8 +401,8 @@
       // Инициализация камеры
       initCamera();
 
-      // Обработчик клика на область фильтров
-      filterClickArea.addEventListener("click", changeFilter);
+      // Обработчик клика на область камеры
+      cameraWrapper.addEventListener("click", changeFilter);
 
       // Кнопка обновления камеры
       document.getElementById("refresh").addEventListener("click", initCamera);
@@ -492,6 +425,9 @@
       });
 
       // Логика для AR
+      const modelViewer = document.querySelector("model-viewer");
+
+      // Слушаем события model-viewer для определения состояния AR
       modelViewer.addEventListener("ar-status", (event) => {
         console.log("AR статус:", event.detail.status);
 
@@ -557,23 +493,6 @@
             showExitModal();
           }
         }
-      });
-
-      // Функция сброса к начальному состоянию (опционально, например, по двойному клику)
-      let lastClickTime = 0;
-      cameraWrapper.addEventListener("dblclick", () => {
-        // Сбрасываем фильтры к начальному состоянию
-        filters.forEach((filter) => filter.classList.remove("active"));
-        filters[0].classList.add("active");
-        currentFilterIndex = 0;
-        currentFilterText.textContent = `Фильтр: ${filterNames[0]}`;
-
-        // Блокируем модель обратно
-        modelViewer.classList.remove("interactive");
-        filterClickArea.classList.remove("disabled");
-        modelUnlockedMessage.style.display = "none";
-
-        console.log("Состояние сброшено к начальному");
       });
     </script>
   </body>
