@@ -126,6 +126,7 @@
     </div>
 
     <button id="refresh">Запросить доступ заново</button>
+    <p class="text" id="closedAr" style="display: none">Вы закрыли ar</p>
 
     <script>
       const video = document.getElementById("cam");
@@ -168,6 +169,23 @@
           filter2.style.opacity = 1;
         }, 300);
       }
+
+      const model = document.querySelector("#model");
+      const closedText = document.querySelector("#closedAr");
+
+      model.addEventListener("ar-status", (event) => {
+        const status = event.detail.status;
+
+        // Когда AR запущен — скрываем надпись
+        if (status === "session-started") {
+          closedText.style.display = "none";
+        }
+
+        // Когда AR закрыт — показываем надпись
+        if (status === "not-presenting") {
+          closedText.style.display = "block";
+        }
+      });
     </script>
   </body>
 </html>
