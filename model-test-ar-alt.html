@@ -39,9 +39,35 @@
         box-shadow: 0 20px 60px rgba(6, 9, 20, 0.55);
       }
 
-      #renderCanvas {
+      #video-container {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
+        z-index: 0;
+        overflow: hidden;
+      }
+
+      #camera-video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: cover;
+      }
+
+      #renderCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
         display: block;
       }
 
@@ -52,7 +78,7 @@
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 10;
+        z-index: 2;
         mix-blend-mode: screen;
         transition: opacity 0.3s ease;
       }
@@ -150,6 +176,9 @@
     <h1>Живой фильтр для камеры</h1>
 
     <div id="camera-wrapper">
+      <div id="video-container">
+        <video id="camera-video" autoplay playsinline muted></video>
+      </div>
       <canvas id="renderCanvas"></canvas>
       <img
         class="filter-overlay"
@@ -175,13 +204,6 @@
 
     <p id="status">Загрузка...</p>
 
-    <video
-      id="videoElement"
-      style="display: none"
-      autoplay
-      playsinline
-      muted></video>
-
     <script type="importmap">
       {
         "imports": {
@@ -198,6 +220,7 @@
 
       // Элементы DOM
       const canvas = document.getElementById("renderCanvas");
+      const cameraVideo = document.getElementById("camera-video");
       const filter1 = document.getElementById("filter1");
       const filter2 = document.getElementById("filter2");
       const status = document.getElementById("status");
@@ -206,48 +229,46 @@
       const refreshBtn = document.getElementById("refresh");
       const screenshotBtn = document.getElementById("screenshot-button");
       const arButtonContainer = document.getElementById("ar-button");
-      const videoElement = document.getElementById("videoElement");
 
       // Three.js переменные
       let scene, camera, renderer, model, mixer, clock;
-      let videoTexture = null;
-      let videoMesh = null;
       let currentStream = null;
       let isARMode = false;
-      let filterClicked = false; // Флаг для отслеживания клика по фильтру
+      let filterClicked = false;
 
       // Инициализация Three.js
       function initThreeJS() {
-        // Сцена
+        // Сцена - прозрачная
         scene = new THREE.Scene();
+        scene.background = null;
 
         // Камера Three.js
         camera = new THREE.PerspectiveCamera(
-          60, // Уменьшаем угол для лучшего отображения
+          50, // Меньший угол обзора
           canvas.clientWidth / canvas.clientHeight,
           0.1,
-          1000
+          100
         );
-        camera.position.z = 5;
+        camera.position.set(0, 0, 5);
 
         // Рендерер
         renderer = new THREE.WebGLRenderer({
           canvas: canvas,
-          alpha: true,
+          alpha: true, // Прозрачный фон
           antialias: true,
           preserveDrawingBuffer: true,
         });
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.xr.enabled = true;
-        renderer.setClearColor(0x000000, 0);
+        renderer.setClearColor(0x000000, 0); // Полностью прозрачный
 
         // Освещение
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
         scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(1, 1, 1);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(2, 3, 4);
         scene.add(directionalLight);
 
         clock = new THREE.Clock();
@@ -261,11 +282,11 @@
           "./assets/model/Horse_animation.gltf",
           (gltf) => {
             model = gltf.scene;
-            model.scale.set(0.4, 0.4, 0.4);
-            model.position.set(0, -0.5, -2); // Ближе к камере
+            model.scale.set(0.5, 0.5, 0.5);
+            model.position.set(0, -0.8, -1.5); // Ближе к камере
 
-            // Поворачиваем модель для лучшего вида
-            model.rotation.y = Math.PI / 4;
+            // Поворачиваем модель
+            model.rotation.y = Math.PI / 3;
 
             scene.add(model);
 
@@ -287,134 +308,120 @@
       }
 
       function createTestModel() {
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshBasicMaterial({color: 0xff0000});
+        const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+          color: 0xff0000,
+          transparent: true,
+          opacity: 0.8,
+        });
         model = new THREE.Mesh(geometry, material);
-        model.position.set(0, 0, -2);
+        model.position.set(0, 0, -1.5);
         scene.add(model);
         status.textContent = "Тестовая модель загружена";
       }
 
-      // Инициализация камеры устройства (на всю область)
+      // Инициализация камеры устройства (простой подход)
       async function initCamera() {
         try {
           // Останавливаем предыдущий поток
           if (currentStream) {
             currentStream.getTracks().forEach((track) => track.stop());
+            currentStream = null;
           }
 
-          // Получаем доступ к камере
-          const constraints = {
+          status.textContent = "Запрашиваю доступ к камере...";
+
+          // Пробуем сначала заднюю камеру
+          let constraints = {
             video: {
               facingMode: {exact: "environment"},
-              width: {ideal: 1920}, // Более высокое разрешение
-              height: {ideal: 1080},
+              width: {ideal: 1280},
+              height: {ideal: 720},
             },
             audio: false,
           };
 
           let stream;
+
           try {
             stream = await navigator.mediaDevices.getUserMedia(constraints);
           } catch (err) {
+            console.log("Задняя камера недоступна, пробуем переднюю...");
             constraints.video.facingMode = "user";
             stream = await navigator.mediaDevices.getUserMedia(constraints);
           }
 
           currentStream = stream;
-          videoElement.srcObject = stream;
+          cameraVideo.srcObject = stream;
 
-          // Ждем загрузки видео
+          // Ждем когда видео начнет играть
           await new Promise((resolve) => {
-            videoElement.onloadedmetadata = () => {
-              videoElement.play().then(resolve);
+            cameraVideo.onloadedmetadata = () => {
+              cameraVideo.play().then(resolve).catch(resolve);
             };
           });
 
-          // Создаем видео текстуру
-          if (videoTexture) {
-            videoTexture.dispose();
-          }
+          status.textContent =
+            "Камера активирована. Нажмите на экран для смены фильтра.";
 
-          videoTexture = new THREE.VideoTexture(videoElement);
-          videoTexture.minFilter = THREE.LinearFilter;
-          videoTexture.magFilter = THREE.LinearFilter;
-
-          // Создаем плоскость для видео, которая заполняет весь экран
-          // Используем подход с OrthographicCamera для 2D плоскости
-
-          // Удаляем старую плоскость если есть
-          if (videoMesh) {
-            scene.remove(videoMesh);
-            videoMesh.geometry.dispose();
-            videoMesh.material.dispose();
-          }
-
-          // Рассчитываем размеры для заполнения экрана
-          const canvasAspect = canvas.clientWidth / canvas.clientHeight;
-          const videoAspect =
-            videoElement.videoWidth / videoElement.videoHeight;
-
-          let planeWidth, planeHeight;
-
-          if (videoAspect > canvasAspect) {
-            // Видео шире чем canvas
-            planeWidth = 2 * (canvasAspect / videoAspect);
-            planeHeight = 2;
-          } else {
-            // Видео уже чем canvas
-            planeWidth = 2;
-            planeHeight = 2 * (videoAspect / canvasAspect);
-          }
-
-          const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-          const material = new THREE.MeshBasicMaterial({
-            map: videoTexture,
-            side: THREE.DoubleSide,
-            transparent: true,
-          });
-
-          videoMesh = new THREE.Mesh(geometry, material);
-          videoMesh.position.set(0, 0, -5); // Дальше назад
-          scene.add(videoMesh);
-
-          status.textContent = "Камера активирована";
+          // Адаптируем видео под размер контейнера
+          adjustVideoSize();
         } catch (error) {
           console.error("Ошибка камеры:", error);
-          status.textContent = "Не удалось получить доступ к камере";
+          status.textContent = "Ошибка доступа к камере. Проверьте разрешения.";
 
-          // Создаем тестовый фон
-          createTestBackground();
+          // Показываем тестовый фон
+          cameraVideo.style.display = "none";
+          document.getElementById("video-container").style.backgroundColor =
+            "#333";
         }
       }
 
-      function createTestBackground() {
-        const geometry = new THREE.PlaneGeometry(10, 10);
-        const material = new THREE.MeshBasicMaterial({
-          color: 0x333333,
-          side: THREE.DoubleSide,
-        });
+      // Адаптация размера видео
+      function adjustVideoSize() {
+        const container = document.getElementById("video-container");
+        const video = cameraVideo;
 
-        if (videoMesh) {
-          scene.remove(videoMesh);
-          videoMesh.geometry.dispose();
-          videoMesh.material.dispose();
-        }
+        // Сброс стилей
+        video.style.minWidth = "100%";
+        video.style.minHeight = "100%";
+        video.style.width = "auto";
+        video.style.height = "auto";
+        video.style.objectFit = "cover";
+        video.style.transform = "translate(-50%, -50%)";
 
-        videoMesh = new THREE.Mesh(geometry, material);
-        videoMesh.position.set(0, 0, -10);
-        scene.add(videoMesh);
+        // Убедимся что видео занимает весь контейнер
+        setTimeout(() => {
+          const containerRatio = container.clientWidth / container.clientHeight;
+
+          if (video.videoWidth && video.videoHeight) {
+            const videoRatio = video.videoWidth / video.videoHeight;
+
+            if (videoRatio > containerRatio) {
+              // Видео шире контейнера
+              video.style.width = "100%";
+              video.style.height = "auto";
+            } else {
+              // Видео уже контейнера
+              video.style.width = "auto";
+              video.style.height = "100%";
+            }
+          }
+        }, 100);
       }
 
       // Инициализация AR
       function initAR() {
         if (!navigator.xr) {
           arButtonContainer.style.display = "none";
+          status.textContent += " (WebXR не поддерживается)";
           return;
         }
 
         const button = ARButton.createButton(renderer, {
           requiredFeatures: ["hit-test"],
+          optionalFeatures: ["dom-overlay"],
+          domOverlay: {root: document.body},
         });
 
         button.textContent = "Посмотреть в AR";
@@ -423,68 +430,148 @@
 
         // Начало AR сессии
         renderer.xr.addEventListener("sessionstart", () => {
+          console.log("AR сессия началась");
           isARMode = true;
           closedAr.style.display = "none";
+
+          // Скрываем фильтры и видео камеры
           filter1.style.display = "none";
           filter2.style.display = "none";
+          cameraVideo.style.display = "none";
+          document.getElementById("video-container").style.backgroundColor =
+            "transparent";
 
-          // Останавливаем камеру
+          // Останавливаем камеру устройства
           if (currentStream) {
             currentStream.getTracks().forEach((track) => track.stop());
-          }
-
-          // Скрываем видео
-          if (videoMesh) {
-            videoMesh.visible = false;
+            currentStream = null;
           }
 
           // Меняем масштаб модели для AR
           if (model) {
-            model.scale.set(0.1, 0.1, 0.1);
+            model.scale.set(0.15, 0.15, 0.15);
+            model.position.set(0, 0, 0);
           }
         });
 
         // Конец AR сессии
         renderer.xr.addEventListener("sessionend", () => {
+          console.log("AR сессия завершена");
           isARMode = false;
           closedAr.style.display = "block";
+
+          // Показываем фильтры и видео
           filter1.style.display = "block";
           filter2.style.display = "block";
+          cameraVideo.style.display = "block";
+          document.getElementById("video-container").style.backgroundColor =
+            "transparent";
 
           // Возвращаем модель
           if (model) {
-            model.scale.set(0.4, 0.4, 0.4);
+            model.scale.set(0.5, 0.5, 0.5);
+            model.position.set(0, -0.8, -1.5);
           }
 
-          // Перезапускаем камеру
+          // Перезапускаем камеру устройства
           setTimeout(initCamera, 100);
         });
       }
 
       // Переключение фильтров (только один раз!)
       function changeFilter() {
-        if (filterClicked) return; // Если уже кликали, ничего не делаем
+        if (filterClicked || isARMode) return;
 
         filterClicked = true;
         filter1.style.opacity = "0";
         filter2.style.opacity = "1";
 
-        // Блокируем дальнейшие клики по фильтру
-        canvas.style.pointerEvents = "none";
+        // Меняем курсор чтобы показать что клик больше не работает
+        canvas.style.cursor = "default";
+
+        // Блокируем дальнейшие клики
+        canvas.removeEventListener("click", changeFilter);
       }
 
-      // Скриншот
+      // Скриншот всей сцены
       function takeScreenshot() {
-        const dataURL = canvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.download = "screenshot.png";
-        link.href = dataURL;
-        link.click();
+        // Скрываем кнопки на время скриншота
+        const arButton = document.querySelector(".ar-button");
+        arButton.style.visibility = "hidden";
+        screenshotBtn.style.visibility = "hidden";
 
-        notification.style.display = "block";
+        // Создаем временный canvas для объединения видео и 3D
         setTimeout(() => {
-          notification.style.display = "none";
-        }, 2000);
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const ctx = tempCanvas.getContext("2d");
+
+          // 1. Рисуем видео
+          if (cameraVideo.videoWidth > 0) {
+            // Вычисляем размеры для рисования видео
+            const videoRatio = cameraVideo.videoWidth / cameraVideo.videoHeight;
+            const canvasRatio = canvas.width / canvas.height;
+
+            let sourceX = 0,
+              sourceY = 0;
+            let sourceWidth = cameraVideo.videoWidth;
+            let sourceHeight = cameraVideo.videoHeight;
+
+            if (videoRatio > canvasRatio) {
+              // Видео шире canvas
+              sourceWidth = cameraVideo.videoHeight * canvasRatio;
+              sourceX = (cameraVideo.videoWidth - sourceWidth) / 2;
+            } else {
+              // Видео уже canvas
+              sourceHeight = cameraVideo.videoWidth / canvasRatio;
+              sourceY = (cameraVideo.videoHeight - sourceHeight) / 2;
+            }
+
+            ctx.drawImage(
+              cameraVideo,
+              sourceX,
+              sourceY,
+              sourceWidth,
+              sourceHeight,
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+          }
+
+          // 2. Поверх рисуем 3D сцену
+          ctx.drawImage(canvas, 0, 0);
+
+          // 3. Поверх рисуем фильтры
+          if (filter1.style.opacity === "1") {
+            ctx.globalCompositeOperation = "screen";
+            ctx.drawImage(filter1, 0, 0, canvas.width, canvas.height);
+          } else {
+            ctx.globalCompositeOperation = "screen";
+            ctx.drawImage(filter2, 0, 0, canvas.width, canvas.height);
+          }
+
+          // Создаем ссылку для скачивания
+          const dataURL = tempCanvas.toDataURL("image/png");
+          const link = document.createElement("a");
+          link.download = `ar-screenshot-${Date.now()}.png`;
+          link.href = dataURL;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Показываем уведомление
+          notification.style.display = "block";
+          setTimeout(() => {
+            notification.style.display = "none";
+          }, 2000);
+
+          // Возвращаем кнопки
+          arButton.style.visibility = "visible";
+          screenshotBtn.style.visibility = "visible";
+        }, 100);
       }
 
       // Анимация
@@ -495,57 +582,43 @@
           mixer.update(clock.getDelta());
         }
 
-        if (videoTexture && !isARMode) {
-          videoTexture.needsUpdate = true;
-        }
-
         if (model && !isARMode) {
-          model.rotation.y += 0.01;
+          model.rotation.y += 0.005;
         }
 
         renderer.render(scene, camera);
       }
 
-      // Ресайз
+      // Ресайз окна
       function onResize() {
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
-        // Пересоздаем видео плоскость при изменении размера
-        if (videoElement.srcObject && videoElement.videoWidth) {
-          const canvasAspect = canvas.clientWidth / canvas.clientHeight;
-          const videoAspect =
-            videoElement.videoWidth / videoElement.videoHeight;
-
-          let planeWidth, planeHeight;
-
-          if (videoAspect > canvasAspect) {
-            planeWidth = 2 * (canvasAspect / videoAspect);
-            planeHeight = 2;
-          } else {
-            planeWidth = 2;
-            planeHeight = 2 * (videoAspect / canvasAspect);
-          }
-
-          videoMesh.geometry.dispose();
-          videoMesh.geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-        }
+        adjustVideoSize();
       }
 
       // Инициализация
       async function init() {
-        initThreeJS();
-        await initCamera();
-        loadModel();
-        initAR();
-        animate();
+        try {
+          initThreeJS();
+          await initCamera();
+          loadModel();
+          initAR();
+          animate();
 
-        // События
-        canvas.addEventListener("click", changeFilter);
-        refreshBtn.addEventListener("click", initCamera);
-        screenshotBtn.addEventListener("click", takeScreenshot);
-        window.addEventListener("resize", onResize);
+          // События
+          canvas.addEventListener("click", changeFilter);
+          refreshBtn.addEventListener("click", initCamera);
+          screenshotBtn.addEventListener("click", takeScreenshot);
+          window.addEventListener("resize", onResize);
+
+          // Изначальный курсор
+          canvas.style.cursor = "pointer";
+        } catch (error) {
+          console.error("Ошибка инициализации:", error);
+          status.textContent = "Ошибка инициализации: " + error.message;
+        }
       }
 
       // Запуск
