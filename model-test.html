@@ -106,9 +106,6 @@
 			.text {
 				color: #fff;
 			}
-			#custom-exit-ar {
-				color: red;
-			}
 		</style>
 	</head>
 
@@ -128,8 +125,8 @@
 				autoplay
 			>
 				<button slot="ar-button" id="ar-button">Посмотреть в ar</button>
+				<button slot="exit-webxr-ar-button">Получить приз</button>
 			</model-viewer>
-			<button id="custom-exit-ar" style="display: none">Закрыть AR</button>
 			<img class="overlay" id="filter1" src="/assets/ice-1.png" />
 			<img class="overlay overlay--2" id="filter2" src="/assets/ice-4.png" />
 		</div>
@@ -206,23 +203,6 @@
 					closedText.style.display = 'block'
 					arLaunched = false
 				}
-			})
-
-			const modelViewer = document.getElementById('model')
-			const customExitButton = document.getElementById('custom-exit-ar')
-
-			// Следим за статусом AR
-			modelViewer.addEventListener('ar-status', event => {
-				if (event.detail.status === 'session-started') {
-					customExitButton.style.display = 'block'
-				} else {
-					customExitButton.style.display = 'none'
-				}
-			})
-
-			// Выход из AR при клике
-			customExitButton.addEventListener('click', () => {
-				modelViewer.exitAR()
 			})
 		</script>
 	</body>
