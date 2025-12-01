@@ -129,7 +129,9 @@
     </div>
 
     <button id="refresh">Запросить доступ заново</button>
-    <p class="text" id="closedAr" style="display: none">Вы закрыли ar</p>
+    <p id="closedAr" style="display: none; font-size: 20px; color: red">
+      Вы закрыли AR
+    </p>
 
     <script>
       const video = document.getElementById("cam");
@@ -173,29 +175,26 @@
         }, 300);
       }
 
+      const arButton = document.querySelector("#ar-button");
       const closedText = document.querySelector("#closedAr");
-      const model = document.querySelector("#model");
 
       let arLaunched = false;
 
-      // Когда пользователь нажимает AR кнопку
-      model.addEventListener("ar-status", (event) => {
-        if (event.detail.status === "session-started") {
-          arLaunched = true;
-          closedText.style.display = "none";
-        }
+      // 1. Когда пользователь нажал кнопку → AR запускается
+      arButton.addEventListener("click", () => {
+        arLaunched = true;
+        closedText.style.display = "none";
       });
 
-      // Работает на iPhone и Android — срабатывает когда вкладка снова активная
+      // 2. Когда пользователь вернулся из AR → страница становится again visible
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible" && arLaunched) {
-          // Пользователь вернулся из AR
           closedText.style.display = "block";
           arLaunched = false;
         }
       });
 
-      // Подстраховка для Safari iOS – событие focus также срабатывает
+      // 3. Фокус тоже срабатывает на некоторых iPhone вериях
       window.addEventListener("focus", () => {
         if (arLaunched) {
           closedText.style.display = "block";
