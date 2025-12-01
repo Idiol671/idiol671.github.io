@@ -42,7 +42,6 @@
         overflow: hidden;
         background: #0d0f14;
         box-shadow: 0 20px 60px rgba(6, 9, 20, 0.55);
-        cursor: pointer;
       }
 
       video {
@@ -63,10 +62,18 @@
         z-index: 1;
         background: transparent;
         --poster-color: transparent;
-        pointer-events: none; /* Блокируем клики по модели */
+        pointer-events: none;
       }
 
-      /* Разрешаем клики только по AR кнопке */
+      model-viewer.interactive {
+        pointer-events: auto;
+        cursor: grab;
+      }
+
+      model-viewer.interactive:active {
+        cursor: grabbing;
+      }
+
       model-viewer::part(default-ar-button) {
         pointer-events: auto;
         position: absolute;
@@ -101,6 +108,19 @@
       model-viewer::part(default-ar-button):focus {
         outline: 2px solid rgba(102, 126, 234, 0.5);
         outline-offset: 2px;
+      }
+
+      .filter-click-area {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 3;
+        cursor: pointer;
+      }
+
+      .filter-click-area.disabled {
+        display: none;
       }
 
       .overlay {
@@ -237,6 +257,16 @@
         text-align: center;
         height: 24px;
       }
+
+      .model-unlocked-message {
+        font-size: 0.9rem;
+        color: #81c784;
+        margin-top: 4px;
+        text-align: center;
+        height: 20px;
+        font-style: italic;
+        display: none;
+      }
     </style>
   </head>
 
@@ -254,20 +284,22 @@
         ar
         ar-modes="webxr scene-viewer quick-look"
         autoplay>
-        <!-- Кнопка AR теперь стилизуется через CSS части -->
       </model-viewer>
 
-      <!-- Все фильтры изначально скрыты -->
+      <div class="filter-click-area" id="filterClickArea"></div>
+
       <img class="overlay active" id="filter1" src="/assets/ice-1.png" />
       <img class="overlay" id="filter2" src="/assets/ice-2.png" />
       <img class="overlay" id="filter3" src="/assets/ice-4.png" />
     </div>
 
     <div class="filter-indicator" id="currentFilterText">Фильтр: Ice 1</div>
+    <div class="model-unlocked-message" id="modelUnlockedMessage">
+      ✓ Модель разблокирована для взаимодействия
+    </div>
 
     <button id="refresh">Перезагрузить камеру</button>
 
-    <!-- Модальное окно при выходе из AR -->
     <div class="modal-overlay" id="arExitModal">
       <div class="modal-content">
         <div class="modal-icon">✨</div>
@@ -287,28 +319,23 @@
       const filter1 = document.getElementById("filter1");
       const filter2 = document.getElementById("filter2");
       const filter3 = document.getElementById("filter3");
+      const filterClickArea = document.getElementById("filterClickArea");
+      const modelViewer = document.getElementById("model");
       const currentFilterText = document.getElementById("currentFilterText");
+      const modelUnlockedMessage = document.getElementById(
+        "modelUnlockedMessage"
+      );
       const arExitModal = document.getElementById("arExitModal");
       const closeModalBtn = document.getElementById("closeModalBtn");
       let currentStream;
 
-      // Массив всех фильтров для удобного управления
       const filters = [filter1, filter2, filter3];
-
-      // Названия фильтров для отображения
       const filterNames = ["Ice 1", "Ice 2", "Ice 4"];
-
-      // Текущий активный фильтр (индекс в массиве)
       let currentFilterIndex = 0;
 
-      // Переменная для таймера задержки модального окна
-      let modalTimeout = null;
-
-      // Флаг для предотвращения множественного показа модального окна
-      let modalShownRecently = false;
-
-      // Флаг для отслеживания AR сессии
-      let isInARSession = false;
+      // Простой флаг для отслеживания AR
+      let wasInAR = false;
+      let arModalTimer = null;
 
       async function initCamera() {
         if (currentStream) {
@@ -337,12 +364,6 @@
       }
 
       function changeFilter() {
-        // Проверяем, достигли ли последнего фильтра (Ice-4)
-        if (currentFilterIndex === filters.length - 1) {
-          console.log("Финальный фильтр Ice-4 активирован");
-          return; // Не делаем ничего, если уже на последнем фильтре
-        }
-
         // Убираем активный класс с текущего фильтра
         filters[currentFilterIndex].classList.remove("active");
 
@@ -358,41 +379,46 @@
         console.log(
           `Переключено на фильтр: ${filterNames[currentFilterIndex]}`
         );
+
+        // Проверяем, достигли ли последнего фильтра (Ice-4)
+        if (currentFilterIndex === filters.length - 1) {
+          unlockModel();
+        }
+      }
+
+      function unlockModel() {
+        console.log(
+          "Достигнут финальный фильтр. Разблокируем модель для взаимодействия."
+        );
+
+        modelViewer.classList.add("interactive");
+        filterClickArea.classList.add("disabled");
+        modelUnlockedMessage.style.display = "block";
+        currentFilterText.textContent = `Фильтр: ${filterNames[currentFilterIndex]} (Финальный)`;
       }
 
       function showExitModal() {
-        // Отменяем предыдущий таймер, если он есть
-        if (modalTimeout) {
-          clearTimeout(modalTimeout);
+        console.log("Показываем модальное окно выхода из AR");
+
+        // Очищаем предыдущий таймер
+        if (arModalTimer) {
+          clearTimeout(arModalTimer);
         }
 
-        // Устанавливаем флаг, что модальное окно только что показано
-        modalShownRecently = true;
-
-        // Запускаем таймер для сброса флага через 2 секунды
-        setTimeout(() => {
-          modalShownRecently = false;
-        }, 2000);
-
-        // Показываем модальное окно с задержкой в 1 секунду
-        modalTimeout = setTimeout(() => {
-          // Проверяем, не было ли модальное окно показано недавно
-          if (!modalShownRecently) {
-            arExitModal.classList.add("show");
-            document.body.style.overflow = "hidden";
-            console.log("Модальное окно показано");
-          }
+        // Устанавливаем задержку в 1 секунду
+        arModalTimer = setTimeout(() => {
+          arExitModal.classList.add("show");
+          document.body.style.overflow = "hidden";
+          console.log("Модальное окно показано");
         }, 1000);
       }
 
       function hideExitModal() {
-        // Отменяем таймер, если модальное окно еще не показалось
-        if (modalTimeout) {
-          clearTimeout(modalTimeout);
-          modalTimeout = null;
+        if (arModalTimer) {
+          clearTimeout(arModalTimer);
+          arModalTimer = null;
         }
 
-        // Скрываем модальное окно
         arExitModal.classList.remove("show");
         document.body.style.overflow = "auto";
         console.log("Модальное окно скрыто");
@@ -401,8 +427,8 @@
       // Инициализация камеры
       initCamera();
 
-      // Обработчик клика на область камеры
-      cameraWrapper.addEventListener("click", changeFilter);
+      // Обработчик клика на область фильтров
+      filterClickArea.addEventListener("click", changeFilter);
 
       // Кнопка обновления камеры
       document.getElementById("refresh").addEventListener("click", initCamera);
@@ -424,74 +450,128 @@
         }
       });
 
-      // Логика для AR
-      const modelViewer = document.querySelector("model-viewer");
+      // ========== ПРОСТАЯ И НАДЕЖНАЯ ЛОГИКА ДЛЯ AR ==========
 
-      // Слушаем события model-viewer для определения состояния AR
+      // 1. Отслеживаем клик по AR кнопке
+      modelViewer.addEventListener("click", (e) => {
+        // Проверяем, была ли нажата AR кнопка
+        if (e.target && e.target.slot === "ar-button") {
+          console.log("AR кнопка нажата");
+          wasInAR = true;
+        }
+      });
+
+      // 2. Отслеживаем события model-viewer
       modelViewer.addEventListener("ar-status", (event) => {
         console.log("AR статус:", event.detail.status);
 
         if (event.detail.status === "session-started") {
-          isInARSession = true;
           console.log("AR сессия началась");
+          wasInAR = true;
         }
 
         if (event.detail.status === "session-ended") {
-          console.log("AR сессия завершилась");
-          isInARSession = false;
-
-          // Показываем модальное окно через секунду
-          setTimeout(() => {
-            if (!modalShownRecently) {
-              showExitModal();
-            }
-          }, 100);
+          console.log("AR сессия завершилась (через ar-status)");
+          if (wasInAR) {
+            showExitModal();
+            wasInAR = false;
+          }
         }
       });
 
-      // Дополнительная проверка через visibilitychange для iOS
+      // 3. Основной способ: отслеживаем visibilitychange
       document.addEventListener("visibilitychange", () => {
         console.log("Visibility change:", document.visibilityState);
 
-        if (document.visibilityState === "hidden" && isInARSession) {
-          console.log("Ушли в AR режим");
+        if (document.visibilityState === "hidden") {
+          // Запоминаем, что страница скрылась (возможно, ушли в AR)
+          console.log("Страница скрыта - возможно ушли в AR");
         }
 
-        if (document.visibilityState === "visible" && isInARSession) {
-          console.log("Вернулись из AR через visibilitychange");
-          isInARSession = false;
+        if (document.visibilityState === "visible") {
+          // Страница снова видима
+          console.log("Страница снова видима");
 
-          // Ждем немного для стабильности на iOS
-          setTimeout(() => {
-            if (!modalShownRecently) {
-              showExitModal();
-            }
-          }, 500);
-        }
-      });
-
-      // Также отслеживаем событие beforeunload для выхода из AR
-      window.addEventListener("beforeunload", () => {
-        if (isInARSession) {
-          console.log("Выход из AR через beforeunload");
-          isInARSession = false;
+          // Если были в AR и вернулись, показываем модалку
+          if (wasInAR) {
+            console.log("Возвращение из AR (visibilitychange)");
+            showExitModal();
+            wasInAR = false;
+          }
         }
       });
 
-      // Простая проверка: если страница была скрыта более 2 секунд, считаем что были в AR
-      let hiddenTime = 0;
+      // 4. Дополнительно: отслеживаем focus для надежности
+      window.addEventListener("focus", () => {
+        console.log("Window получил фокус");
+
+        // Небольшая задержка для стабильности
+        setTimeout(() => {
+          if (wasInAR) {
+            console.log("Возвращение из AR (focus)");
+            showExitModal();
+            wasInAR = false;
+          }
+        }, 300);
+      });
+
+      // 5. Отслеживаем сообщения от AR сессии
+      window.addEventListener("message", (event) => {
+        console.log("Получено сообщение:", event.data);
+        // Некоторые AR реализации отправляют сообщения
+      });
+
+      // 6. Таймер для авто-сброса флага (на случай если AR не запустился)
+      setInterval(() => {
+        if (wasInAR && document.visibilityState === "visible") {
+          // Если флаг установлен больше 30 секунд и страница видима, сбрасываем
+          wasInAR = false;
+          console.log("Авто-сброс флага AR (таймаут)");
+        }
+      }, 30000);
+
+      // 7. Простой способ: отслеживаем время скрытия страницы
+      let pageHiddenTime = null;
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "hidden") {
-          hiddenTime = Date.now();
-        } else if (document.visibilityState === "visible") {
-          const timeHidden = Date.now() - hiddenTime;
-          console.log("Страница была скрыта:", timeHidden, "мс");
+          pageHiddenTime = Date.now();
+          console.log("Страница скрыта в:", pageHiddenTime);
+        }
 
-          // Если страница была скрыта более 2 секунд, возможно это была AR сессия
-          if (timeHidden > 2000 && !isInARSession && !modalShownRecently) {
-            console.log("Возможная AR сессия завершена (по времени)");
+        if (document.visibilityState === "visible" && pageHiddenTime) {
+          const hiddenDuration = Date.now() - pageHiddenTime;
+          console.log("Страница была скрыта", hiddenDuration, "мс");
+
+          // Если страница была скрыта более 1 секунды, считаем что это была AR сессия
+          if (hiddenDuration > 1000) {
+            console.log("Длительное скрытие - вероятно AR сессия");
             showExitModal();
           }
+
+          pageHiddenTime = null;
+        }
+      });
+
+      // Функция сброса к начальному состоянию
+      let lastClickTime = 0;
+      cameraWrapper.addEventListener("dblclick", () => {
+        filters.forEach((filter) => filter.classList.remove("active"));
+        filters[0].classList.add("active");
+        currentFilterIndex = 0;
+        currentFilterText.textContent = `Фильтр: ${filterNames[0]}`;
+
+        modelViewer.classList.remove("interactive");
+        filterClickArea.classList.remove("disabled");
+        modelUnlockedMessage.style.display = "none";
+
+        console.log("Состояние сброшено к начальному");
+      });
+
+      // Для тестирования: кнопка для принудительного показа модалки
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "m" && e.ctrlKey) {
+          console.log("Принудительный показ модального окна (Ctrl+M)");
+          showExitModal();
         }
       });
     </script>
