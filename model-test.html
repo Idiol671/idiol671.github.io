@@ -173,20 +173,33 @@
         }, 300);
       }
 
-      const model = document.querySelector("#model");
       const closedText = document.querySelector("#closedAr");
+      const model = document.querySelector("#model");
 
+      let arLaunched = false;
+
+      // Когда пользователь нажимает AR кнопку
       model.addEventListener("ar-status", (event) => {
-        const status = event.detail.status;
-
-        // Когда AR запущен — скрываем надпись
-        if (status === "session-started") {
+        if (event.detail.status === "session-started") {
+          arLaunched = true;
           closedText.style.display = "none";
         }
+      });
 
-        // Когда AR закрыт — показываем надпись
-        if (status === "not-presenting") {
+      // Работает на iPhone и Android — срабатывает когда вкладка снова активная
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && arLaunched) {
+          // Пользователь вернулся из AR
           closedText.style.display = "block";
+          arLaunched = false;
+        }
+      });
+
+      // Подстраховка для Safari iOS – событие focus также срабатывает
+      window.addEventListener("focus", () => {
+        if (arLaunched) {
+          closedText.style.display = "block";
+          arLaunched = false;
         }
       });
     </script>
