@@ -4,63 +4,53 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- A-FRAME -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
-    <!-- WebXR hit test (нужен для iPhone + ARKit через WebXR) -->
-    <script src="https://cdn.jsdelivr.net/npm/aframe-xr-hit-test@1.1.3/dist/aframe-xr-hit-test.min.js"></script>
-
-    <title>AR фильтр</title>
-
     <style>
-      :root {
-        color-scheme: dark;
-        font-family: "Inter", system-ui;
-        background-color: #050608;
-        color: #f4f5f7;
-      }
-
-      body {
+      body,
+      html {
         margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        padding: 20px;
+        padding: 0;
+        overflow: hidden;
+        background: black;
+        font-family: sans-serif;
       }
 
-      h1 {
-        margin: 0;
-        font-size: 24px;
-        text-align: center;
-      }
-
-      .ui {
-        position: fixed;
-        bottom: 20px;
-        z-index: 9999;
-        display: flex;
-        gap: 12px;
-      }
-
-      button {
-        padding: 10px 20px;
-        border-radius: 50px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        background: rgba(255, 255, 255, 0.05);
-        color: white;
-        font-size: 16px;
-        cursor: pointer;
-      }
-
-      .overlay {
+      #cameraWrapper {
         position: fixed;
         inset: 0;
-        pointer-events: none;
-        mix-blend-mode: screen;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #video {
+        position: absolute;
         width: 100%;
         height: 100%;
         object-fit: cover;
+        z-index: 0;
+      }
+
+      #sceneContainer {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      #filter1,
+      #filter2 {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        mix-blend-mode: screen;
+        pointer-events: none;
+        z-index: 3;
         transition: opacity 0.5s;
       }
 
@@ -68,99 +58,125 @@
         opacity: 0;
       }
 
+      .ui {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 5;
+        display: flex;
+        gap: 12px;
+      }
+
+      button {
+        padding: 10px 18px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50px;
+        color: white;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
       #closedAr {
-        margin-top: 16px;
-        font-size: 18px;
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
         color: red;
+        font-size: 20px;
         display: none;
+        z-index: 5;
       }
     </style>
   </head>
 
   <body>
-    <h1>AR-фильтр на A-Frame</h1>
-
-    <!-- Ice overlays -->
-    <img id="filter1" class="overlay" src="/assets/ice-1.png" />
-    <img id="filter2" class="overlay" src="/assets/ice-4.png" />
-
-    <p id="closedAr">Вы закрыли AR</p>
-
-    <!-- UI buttons -->
-    <div class="ui">
-      <button id="startAR">Посмотреть в AR</button>
-      <button id="changeFilter">Сменить фильтр</button>
+    <div id="cameraWrapper">
+      <video id="video" autoplay playsinline muted></video>
     </div>
 
-    <!-- SCENE -->
-    <a-scene
-      renderer="colorManagement: true;"
-      embedded
-      xrweb="mode: ar; overlay: true;"
-      xr-hit-test="enabled: true;"
-      xr-light="estimate:true;"
-      webxr="optionalFeatures: hit-test, dom-overlay; domOverlay: {root: document.body}">
-      <!-- Camera -->
-      <a-entity camera look-controls></a-entity>
+    <div id="sceneContainer">
+      <a-scene
+        embedded
+        vr-mode-ui="enabled: false"
+        renderer="alpha: true;"
+        loading-screen="enabled: false">
+        <a-entity camera position="0 1.6 0"></a-entity>
 
-      <!-- 3D Model -->
-      <a-entity
-        id="model"
-        visible="false"
-        gltf-model="/assets/model/Horse_animation.gltf"
-        scale="0.3 0.3 0.3"
-        xr-hit-test="target:#model;"></a-entity>
-    </a-scene>
+        <a-entity
+          id="model"
+          gltf-model="/assets/model/Horse_animation.gltf"
+          position="0 -0.5 -2"
+          scale="0.4 0.4 0.4"
+          animation-mixer>
+        </a-entity>
+      </a-scene>
+    </div>
+
+    <img id="filter1" src="/assets/ice-1.png" />
+    <img id="filter2" src="/assets/ice-4.png" />
+
+    <div id="closedAr">Вы закрыли AR</div>
+
+    <div class="ui">
+      <button id="toggleAR">Посмотреть в AR</button>
+      <button id="toggleFilter">Сменить фильтр</button>
+    </div>
 
     <script>
-      let arLaunched = false;
-
-      const model = document.getElementById("model");
+      const video = document.getElementById("video");
       const closedText = document.getElementById("closedAr");
 
       const f1 = document.getElementById("filter1");
       const f2 = document.getElementById("filter2");
-      let filterSwitched = false;
+      let filter = false;
 
-      // ----------- запуск AR -----------
+      async function startCamera() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {facingMode: "environment"},
+            audio: false,
+          });
 
-      document.getElementById("startAR").onclick = () => {
-        document.querySelector("a-scene").enterAR();
-        arLaunched = true;
-        closedText.style.display = "none";
-      };
-
-      // Когда пользователь выходит из AR
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible" && arLaunched) {
-          closedText.style.display = "block";
-          arLaunched = false;
+          video.srcObject = stream;
+        } catch (e) {
+          alert("Ошибка доступа к камере: " + e);
         }
-      });
+      }
 
-      window.addEventListener("focus", () => {
-        if (arLaunched) {
-          closedText.style.display = "block";
-          arLaunched = false;
-        }
-      });
+      startCamera();
 
-      // ----------- смена фильтра -----------
-      document.getElementById("changeFilter").onclick = () => {
-        if (!filterSwitched) {
-          f1.style.opacity = 0;
-          f2.style.opacity = 1;
+      // ---- AR toggle (full-screen mode) ----
+      const toggleAR = document.getElementById("toggleAR");
+      let arOn = false;
+
+      toggleAR.onclick = () => {
+        if (!arOn) {
+          document.documentElement.requestFullscreen?.();
+          closedText.style.display = "none";
+          arOn = true;
         } else {
-          f1.style.opacity = 1;
-          f2.style.opacity = 0;
+          document.exitFullscreen?.();
+          closedText.style.display = "block";
+          arOn = false;
         }
-        filterSwitched = !filterSwitched;
       };
 
-      // Показ модели после захвата плоскости
-      window.addEventListener("xr-hit-test-select", () => {
-        model.setAttribute("visible", "true");
+      // If AR closed by system
+      document.addEventListener("fullscreenchange", () => {
+        if (!document.fullscreenElement && arOn) {
+          closedText.style.display = "block";
+          arOn = false;
+        }
       });
+
+      // ---- Filter toggle ----
+      document.getElementById("toggleFilter").onclick = () => {
+        filter = !filter;
+        f1.style.opacity = filter ? 0 : 1;
+        f2.style.opacity = filter ? 1 : 0;
+      };
     </script>
   </body>
 </html>
