@@ -21,7 +21,6 @@
         justify-content: center;
         gap: 24px;
         padding: 24px;
-        overflow-x: hidden;
       }
 
       h1 {
@@ -55,16 +54,15 @@
         pointer-events: none;
         z-index: 10;
         mix-blend-mode: screen;
-        opacity: 0;
         transition: opacity 0.5s ease;
-      }
-
-      .filter-overlay.active {
-        opacity: 1;
       }
 
       #filter1 {
         opacity: 1;
+      }
+
+      #filter2 {
+        opacity: 0;
       }
 
       #status {
@@ -128,9 +126,9 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 20;
-        background: rgba(0, 0, 0, 0.7) !important;
-        border: 2px solid white !important;
-        color: white !important;
+        background: rgba(0, 0, 0, 0.7);
+        border: 2px solid white;
+        color: white;
         font-weight: bold;
       }
 
@@ -146,14 +144,6 @@
         border: 2px solid white;
         cursor: pointer;
       }
-
-      .screenshot-button:active {
-        transform: scale(0.95);
-      }
-
-      #videoElement {
-        display: none;
-      }
     </style>
   </head>
   <body>
@@ -162,7 +152,7 @@
     <div id="camera-wrapper">
       <canvas id="renderCanvas"></canvas>
       <img
-        class="filter-overlay active"
+        class="filter-overlay"
         id="filter1"
         src="./assets/ice-1.png"
         alt="Фильтр 1" />
@@ -185,8 +175,12 @@
 
     <p id="status">Загрузка...</p>
 
-    <!-- Видео элемент для камеры -->
-    <video id="videoElement" autoplay playsinline muted></video>
+    <video
+      id="videoElement"
+      style="display: none"
+      autoplay
+      playsinline
+      muted></video>
 
     <script type="importmap">
       {
@@ -220,22 +214,20 @@
       let videoMesh = null;
       let currentStream = null;
       let isARMode = false;
-      let currentFilter = 1;
 
-      // Инициализация Three.js сцены
-      function initScene() {
-        // Создание сцены
+      // Инициализация Three.js
+      function initThreeJS() {
+        // Сцена
         scene = new THREE.Scene();
-        scene.background = null;
 
-        // Камера Three.js - настраиваем под вертикальную ориентацию
+        // Камера
         camera = new THREE.PerspectiveCamera(
-          75, // Более широкий угол
+          75,
           canvas.clientWidth / canvas.clientHeight,
           0.1,
           1000
         );
-        camera.position.set(0, 0, 5);
+        camera.position.z = 5;
 
         // Рендерер
         renderer = new THREE.WebGLRenderer({
@@ -250,17 +242,17 @@
         renderer.setClearColor(0x000000, 0);
 
         // Освещение
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1);
         scene.add(ambientLight);
 
         const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(5, 5, 5);
+        directionalLight.position.set(1, 1, 1);
         scene.add(directionalLight);
 
         clock = new THREE.Clock();
       }
 
-      // Загрузка 3D модели
+      // Загрузка модели
       function loadModel() {
         const loader = new GLTFLoader();
 
@@ -268,36 +260,22 @@
           "./assets/model/Horse_animation.gltf",
           (gltf) => {
             model = gltf.scene;
-            model.scale.set(0.8, 0.8, 0.8);
-            model.position.set(0, 0, -2); // Перед камерой
-
-            // Поворачиваем модель для лучшего вида
-            model.rotation.y = Math.PI / 4;
-
+            model.scale.set(0.5, 0.5, 0.5);
+            model.position.set(0, -1, -3);
             scene.add(model);
 
-            // Анимации
+            // Анимация
             if (gltf.animations && gltf.animations.length) {
               mixer = new THREE.AnimationMixer(model);
-              gltf.animations.forEach((clip) => {
-                mixer.clipAction(clip).play();
-              });
+              mixer.clipAction(gltf.animations[0]).play();
             }
 
             status.textContent =
               "Модель загружена. Нажмите на экран для смены фильтра.";
-            console.log("Модель загружена и добавлена в сцену");
           },
-          (progress) => {
-            const percent = ((progress.loaded / progress.total) * 100).toFixed(
-              1
-            );
-            status.textContent = `Загрузка модели: ${percent}%`;
-          },
+          undefined,
           (error) => {
             console.error("Ошибка загрузки модели:", error);
-            status.textContent =
-              "Ошибка загрузки модели. Создаю тестовую модель...";
             createTestModel();
           }
         );
@@ -305,162 +283,104 @@
 
       function createTestModel() {
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshStandardMaterial({
-          color: 0x00ff00,
-          emissive: 0x00ff00,
-          emissiveIntensity: 0.5,
-        });
+        const material = new THREE.MeshBasicMaterial({color: 0xff0000});
         model = new THREE.Mesh(geometry, material);
-        model.position.set(0, 0, -2);
-        model.scale.set(0.8, 0.8, 0.8);
+        model.position.set(0, 0, -3);
         scene.add(model);
-        console.log("Тестовая модель создана");
+        status.textContent = "Тестовая модель загружена";
       }
 
       // Инициализация камеры устройства
-      async function initDeviceCamera() {
+      async function initCamera() {
         try {
-          status.textContent = "Запрос доступа к камере...";
-
           // Останавливаем предыдущий поток
           if (currentStream) {
             currentStream.getTracks().forEach((track) => track.stop());
           }
 
-          // Получаем поток с камеры
+          // Получаем доступ к камере
           const constraints = {
             video: {
               facingMode: {exact: "environment"},
-              width: {ideal: 1920},
-              height: {ideal: 1080},
+              width: {ideal: 1280},
+              height: {ideal: 720},
             },
             audio: false,
           };
 
           let stream;
-
           try {
             stream = await navigator.mediaDevices.getUserMedia(constraints);
           } catch (err) {
-            console.log("Задняя камера недоступна, пробуем переднюю...");
-            constraints.video.facingMode = {exact: "user"};
+            constraints.video.facingMode = "user";
             stream = await navigator.mediaDevices.getUserMedia(constraints);
           }
 
           currentStream = stream;
           videoElement.srcObject = stream;
 
-          // Ждем, пока видео будет готово
+          // Ждем загрузки видео
           await new Promise((resolve) => {
             videoElement.onloadedmetadata = () => {
-              videoElement
-                .play()
-                .then(() => {
-                  console.log(
-                    "Видео запущено, размеры:",
-                    videoElement.videoWidth,
-                    "x",
-                    videoElement.videoHeight
-                  );
-                  createVideoBackground();
-                  resolve();
-                })
-                .catch(resolve);
+              videoElement.play().then(resolve);
             };
           });
 
-          status.textContent =
-            "Камера активирована. Нажмите на экран для смены фильтра.";
+          // Создаем видео текстуру
+          if (videoTexture) {
+            videoTexture.dispose();
+          }
+
+          videoTexture = new THREE.VideoTexture(videoElement);
+          videoTexture.minFilter = THREE.LinearFilter;
+          videoTexture.magFilter = THREE.LinearFilter;
+
+          // Создаем плоскость для видео
+          const videoAspect =
+            videoElement.videoWidth / videoElement.videoHeight;
+          const screenAspect = canvas.clientWidth / canvas.clientHeight;
+
+          let width, height;
+          if (videoAspect > screenAspect) {
+            width = 10;
+            height = 10 / videoAspect;
+          } else {
+            width = 10 * videoAspect;
+            height = 10;
+          }
+
+          const geometry = new THREE.PlaneGeometry(width, height);
+          const material = new THREE.MeshBasicMaterial({
+            map: videoTexture,
+            side: THREE.DoubleSide,
+          });
+
+          if (videoMesh) {
+            scene.remove(videoMesh);
+            videoMesh.geometry.dispose();
+            videoMesh.material.dispose();
+          }
+
+          videoMesh = new THREE.Mesh(geometry, material);
+          videoMesh.position.set(0, 0, -10); // Фон
+          scene.add(videoMesh);
+
+          status.textContent = "Камера активирована";
         } catch (error) {
           console.error("Ошибка камеры:", error);
-          status.textContent = "Ошибка доступа к камере. Проверьте разрешения.";
-
-          // Создаем тестовый фон если камера недоступна
-          createTestBackground();
+          status.textContent = "Не удалось получить доступ к камере";
         }
-      }
-
-      // Создание видео фона, который заполняет весь экран
-      function createVideoBackground() {
-        if (videoTexture) {
-          videoTexture.dispose();
-        }
-
-        videoTexture = new THREE.VideoTexture(videoElement);
-        videoTexture.minFilter = THREE.LinearFilter;
-        videoTexture.magFilter = THREE.LinearFilter;
-        videoTexture.format = THREE.RGBAFormat;
-
-        // Рассчитываем размеры для заполнения всего экрана
-        // Используем подход с камерой Orthographic для 2D фона
-        const aspect = canvas.clientWidth / canvas.clientHeight;
-        const videoAspect = videoElement.videoWidth / videoElement.videoHeight;
-
-        let scaleX, scaleY;
-
-        if (videoAspect > aspect) {
-          // Видео шире чем canvas
-          scaleX = aspect / videoAspect;
-          scaleY = 1;
-        } else {
-          // Видео выше чем canvas
-          scaleX = 1;
-          scaleY = videoAspect / aspect;
-        }
-
-        const geometry = new THREE.PlaneGeometry(2 * scaleX, 2 * scaleY);
-        const material = new THREE.MeshBasicMaterial({
-          map: videoTexture,
-          transparent: false,
-          side: THREE.DoubleSide,
-        });
-
-        if (videoMesh) {
-          scene.remove(videoMesh);
-          videoMesh.geometry.dispose();
-          videoMesh.material.dispose();
-        }
-
-        videoMesh = new THREE.Mesh(geometry, material);
-        videoMesh.position.set(0, 0, -10); // Далеко назад
-        scene.add(videoMesh);
-
-        console.log("Видео фон создан, масштаб:", scaleX, scaleY);
-      }
-
-      // Тестовый фон если камера недоступна
-      function createTestBackground() {
-        const geometry = new THREE.PlaneGeometry(20, 20);
-        const material = new THREE.MeshBasicMaterial({
-          color: 0x333333,
-          side: THREE.DoubleSide,
-        });
-
-        if (videoMesh) {
-          scene.remove(videoMesh);
-          videoMesh.geometry.dispose();
-          videoMesh.material.dispose();
-        }
-
-        videoMesh = new THREE.Mesh(geometry, material);
-        videoMesh.position.set(0, 0, -15);
-        scene.add(videoMesh);
       }
 
       // Инициализация AR
       function initAR() {
         if (!navigator.xr) {
-          status.textContent = "WebXR не поддерживается вашим браузером";
           arButtonContainer.style.display = "none";
           return;
         }
 
-        renderer.xr.enabled = true;
-
         const button = ARButton.createButton(renderer, {
           requiredFeatures: ["hit-test"],
-          optionalFeatures: ["dom-overlay"],
-          domOverlay: {root: document.body},
         });
 
         button.textContent = "Посмотреть в AR";
@@ -469,101 +389,57 @@
 
         // Начало AR сессии
         renderer.xr.addEventListener("sessionstart", () => {
-          console.log("AR сессия началась");
           isARMode = true;
           closedAr.style.display = "none";
-
-          // Скрываем фильтры
           filter1.style.display = "none";
           filter2.style.display = "none";
 
-          // Останавливаем камеру устройства
+          // Останавливаем камеру
           if (currentStream) {
             currentStream.getTracks().forEach((track) => track.stop());
-            currentStream = null;
           }
 
-          // Убираем видео плоскость
+          // Скрываем видео
           if (videoMesh) {
             videoMesh.visible = false;
           }
-
-          // Масштабируем модель для AR
-          if (model) {
-            model.scale.set(0.1, 0.1, 0.1);
-            model.position.set(0, 0, 0);
-          }
         });
 
-        // Завершение AR сессии
+        // Конец AR сессии
         renderer.xr.addEventListener("sessionend", () => {
-          console.log("AR сессия завершена");
           isARMode = false;
           closedAr.style.display = "block";
-
-          // Показываем фильтры
           filter1.style.display = "block";
           filter2.style.display = "block";
 
-          // Возвращаем модель
-          if (model) {
-            model.scale.set(0.8, 0.8, 0.8);
-            model.position.set(0, 0, -2);
-          }
-
-          // Восстанавливаем видео плоскость
-          if (videoMesh) {
-            videoMesh.visible = true;
-          }
-
           // Перезапускаем камеру
-          setTimeout(initDeviceCamera, 100);
+          setTimeout(initCamera, 100);
         });
       }
 
-      // Переключение фильтров (один клик - переключается на фильтр 2 и остается)
-      function toggleFilter() {
-        if (isARMode) return;
-
-        currentFilter = 2; // Всегда переключаем на фильтр 2
-
-        if (currentFilter === 1) {
-          filter1.classList.add("active");
-          filter2.classList.remove("active");
+      // Переключение фильтров
+      function changeFilter() {
+        if (filter1.style.opacity === "1") {
+          filter1.style.opacity = "0";
+          filter2.style.opacity = "1";
         } else {
-          filter1.classList.remove("active");
-          filter2.classList.add("active");
+          filter1.style.opacity = "1";
+          filter2.style.opacity = "0";
         }
-
-        console.log("Активный фильтр:", currentFilter);
       }
 
       // Скриншот
       function takeScreenshot() {
-        if (!renderer || isARMode) return;
-
-        const arButton = document.querySelector(".ar-button");
-        arButton.style.display = "none";
-        screenshotBtn.style.display = "none";
-
         const dataURL = canvas.toDataURL("image/png");
-
         const link = document.createElement("a");
-        link.download = `ar-screenshot-${Date.now()}.png`;
+        link.download = "screenshot.png";
         link.href = dataURL;
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
 
         notification.style.display = "block";
         setTimeout(() => {
           notification.style.display = "none";
         }, 2000);
-
-        setTimeout(() => {
-          arButton.style.display = "block";
-          screenshotBtn.style.display = "block";
-        }, 100);
       }
 
       // Анимация
@@ -574,68 +450,41 @@
           mixer.update(clock.getDelta());
         }
 
-        // Обновляем видео текстуру
-        if (videoTexture && !isARMode) {
+        if (videoTexture) {
           videoTexture.needsUpdate = true;
         }
 
-        // Вращаем модель
         if (model && !isARMode) {
-          model.rotation.y += 0.005;
+          model.rotation.y += 0.01;
         }
 
         renderer.render(scene, camera);
       }
 
-      // Изменение размера окна
-      function onWindowResize() {
+      // Ресайз
+      function onResize() {
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-
-        // Пересоздаем видео фон при изменении размера
-        if (videoElement.srcObject && videoElement.videoWidth) {
-          createVideoBackground();
-        }
       }
 
-      // Инициализация приложения
+      // Инициализация
       async function init() {
-        try {
-          console.log("Инициализация сцены...");
-          initScene();
+        initThreeJS();
+        await initCamera();
+        loadModel();
+        initAR();
+        animate();
 
-          console.log("Загрузка камеры...");
-          await initDeviceCamera();
-
-          console.log("Загрузка модели...");
-          loadModel();
-
-          console.log("Инициализация AR...");
-          initAR();
-
-          console.log("Запуск анимации...");
-          animate();
-
-          // Обработчики событий
-          canvas.addEventListener("click", toggleFilter);
-          refreshBtn.addEventListener("click", initDeviceCamera);
-          screenshotBtn.addEventListener("click", takeScreenshot);
-          window.addEventListener("resize", onWindowResize);
-
-          console.log("Приложение инициализировано");
-        } catch (error) {
-          console.error("Ошибка инициализации:", error);
-          status.textContent = "Ошибка инициализации: " + error.message;
-        }
+        // События
+        canvas.addEventListener("click", changeFilter);
+        refreshBtn.addEventListener("click", initCamera);
+        screenshotBtn.addEventListener("click", takeScreenshot);
+        window.addEventListener("resize", onResize);
       }
 
       // Запуск
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoader", init);
-      } else {
-        init();
-      }
+      init();
     </script>
   </body>
 </html>
