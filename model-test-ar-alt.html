@@ -168,10 +168,93 @@
     <div id="status">Загрузка...</div>
     <div class="notification" id="notification">Снимок сохранен!</div>
 
-    <!-- Подключаем Three.js с CDN напрямую -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Подключаем Three.js и необходимые модули -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/webxr/ARButton.min.js"></script>
+
+    <!-- WebXR polyfill для поддержки на iOS -->
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/dist/webxr-polyfill.min.js"></script>
+
+    <!-- AR Button для Three.js -->
+    <script>
+      // Простая версия ARButton если оригинальная не работает
+      if (typeof THREE !== "undefined" && !THREE.ARButton) {
+        THREE.ARButton = {
+          createButton: function (renderer, sessionInit = {}) {
+            const button = document.createElement("button");
+
+            function showStartAR() {
+              if (sessionInit.requiredFeatures === undefined) {
+                sessionInit.requiredFeatures = ["hit-test"];
+              }
+
+              let currentSession = null;
+
+              async function onSessionStarted(session) {
+                session.addEventListener("end", onSessionEnded);
+                await renderer.xr.setSession(session);
+                currentSession = session;
+                button.textContent = "ВЫЙТИ ИЗ AR";
+              }
+
+              function onSessionEnded(event) {
+                currentSession.removeEventListener("end", onSessionEnded);
+                currentSession = null;
+                button.textContent = "🚀 AR Режим";
+              }
+
+              button.addEventListener("click", function () {
+                if (currentSession === null) {
+                  navigator.xr
+                    .requestSession("immersive-ar", sessionInit)
+                    .then(onSessionStarted);
+                } else {
+                  currentSession.end();
+                }
+              });
+            }
+
+            if ("xr" in navigator) {
+              button.id = "ARButton";
+              button.style.display = "inline-block";
+              button.style.padding = "12px 24px";
+              button.style.border = "1px solid #fff";
+              button.style.borderRadius = "4px";
+              button.style.background = "rgba(0, 0, 0, 0.1)";
+              button.style.color = "#fff";
+              button.style.font = "normal 13px sans-serif";
+              button.style.textAlign = "center";
+              button.style.opacity = "1";
+              button.style.outline = "none";
+              button.style.zIndex = "999";
+              button.textContent = "🚀 AR Режим";
+
+              navigator.xr
+                .isSessionSupported("immersive-ar")
+                .then(function (supported) {
+                  if (supported) {
+                    showStartAR();
+                  } else {
+                    button.style.display = "none";
+                  }
+                })
+                .catch(function () {
+                  button.style.display = "none";
+                });
+
+              return button;
+            } else {
+              const message = document.createElement("a");
+              message.href = "https://immersiveweb.dev/";
+              message.innerHTML = "AR НЕДОСТУПНО";
+              message.style.color = "#fff";
+              message.style.textDecoration = "none";
+              return message;
+            }
+          },
+        };
+      }
+    </script>
 
     <script>
       // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
@@ -205,14 +288,14 @@
 
         // 2. Камера (маленький угол обзора для маленькой модели)
         camera = new THREE.PerspectiveCamera(
-          40, // Угол обзора
+          40,
           elements.container.clientWidth / elements.container.clientHeight,
           0.01,
           100
         );
-        camera.position.set(0, 0.2, 1.5); // Близко и немного выше
+        camera.position.set(0, 0.2, 1.5);
 
-        // 3. Рендерер
+        // 3. Рендерер с поддержкой WebXR
         renderer = new THREE.WebGLRenderer({
           canvas: elements.canvas,
           alpha: true,
@@ -223,19 +306,13 @@
           elements.container.clientWidth,
           elements.container.clientHeight
         );
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Ограничиваем для производительности
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x000000, 0);
 
-        // 4. Включаем WebXR если поддерживается
-        if ("xr" in navigator && renderer.xr) {
-          renderer.xr.enabled = true;
-          console.log("WebXR активирован");
-        } else {
-          console.log("WebXR не доступен");
-          elements.arButton.style.display = "none";
-        }
+        // Включаем WebXR
+        renderer.xr.enabled = true;
 
-        // 5. Освещение
+        // 4. Освещение
         const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
         scene.add(ambientLight);
 
@@ -243,7 +320,7 @@
         directionalLight.position.set(0.5, 1, 0.5);
         scene.add(directionalLight);
 
-        // 6. Часы для анимации
+        // 5. Часы для анимации
         clock = new THREE.Clock();
 
         elements.status.textContent = "Three.js инициализирован";
@@ -263,24 +340,20 @@
 
             // МАЛЕНЬКИЙ МАСШТАБ
             model.scale.set(0.1, 0.1, 0.1);
-            model.position.set(0, -0.2, 0); // Низко
+            model.position.set(0, -0.2, 0);
 
             // Поворот для лучшего вида
             model.rotation.y = Math.PI / 6;
 
             scene.add(model);
 
-            // Анимация (если есть)
+            // Анимация
             if (gltf.animations && gltf.animations.length > 0) {
               console.log("Анимация найдена");
               mixer = new THREE.AnimationMixer(model);
-
-              // Простая анимация без сложной логики
               const action = mixer.clipAction(gltf.animations[0]);
               action.play();
-
-              // Устанавливаем скорость анимации
-              mixer.timeScale = 0.5; // Медленнее
+              mixer.timeScale = 0.5;
             }
 
             elements.status.textContent =
@@ -299,7 +372,6 @@
         );
       }
 
-      // Простая модель если основная не загрузилась
       function createSimpleModel() {
         console.log("Создаю простую модель");
 
@@ -320,7 +392,6 @@
       // ========== КАМЕРА УСТРОЙСТВА ==========
       async function initCamera() {
         try {
-          // Останавливаем предыдущий поток
           if (currentStream) {
             currentStream.getTracks().forEach((track) => track.stop());
           }
@@ -340,7 +411,6 @@
           currentStream = stream;
           elements.video.srcObject = stream;
 
-          // Ждем готовности видео
           await new Promise((resolve) => {
             elements.video.onloadedmetadata = () => {
               elements.video.play().then(resolve).catch(resolve);
@@ -352,102 +422,103 @@
         } catch (error) {
           console.error("Ошибка камеры:", error);
           elements.status.textContent = "Ошибка камеры";
-
-          // Фон если камера недоступна
           elements.video.style.display = "none";
           elements.container.style.background =
             "linear-gradient(45deg, #000, #333)";
         }
       }
 
-      // Переключение камеры
       function switchCamera() {
         currentCameraType =
           currentCameraType === "environment" ? "user" : "environment";
         initCamera();
       }
 
-      // ========== AR РЕЖИМ ==========
-      function initAR() {
-        if (!("xr" in navigator)) {
-          console.log("WebXR не поддерживается браузером");
-          elements.arButton.style.display = "none";
-          return;
+      // ========== НАСТРОЙКА AR РЕЖИМА ==========
+      function setupAR() {
+        console.log("Настройка AR режима...");
+
+        // Создаем кнопку AR с помощью Three.js ARButton
+        const arButton = THREE.ARButton.createButton(renderer, {
+          requiredFeatures: ["hit-test"],
+          optionalFeatures: ["dom-overlay"],
+          domOverlay: {root: document.body},
+        });
+
+        // Настраиваем стиль кнопки
+        arButton.id = "ar-button";
+        arButton.style.cssText = `
+                position: relative;
+                background: #007AFF;
+                border: 2px solid #007AFF;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 25px;
+                font-size: 14px;
+                font-weight: bold;
+                cursor: pointer;
+                backdrop-filter: blur(10px);
+                margin: 0;
+            `;
+
+        // Заменяем существующую кнопку AR
+        const oldButton = document.getElementById("ar-button");
+        if (oldButton && oldButton.parentNode) {
+          oldButton.parentNode.replaceChild(arButton, oldButton);
         }
 
-        elements.arButton.addEventListener("click", async () => {
-          try {
-            console.log("Попытка запуска AR...");
+        // Обновляем ссылку на кнопку
+        elements.arButton = arButton;
 
-            // Проверяем поддержку AR
-            const supported = await navigator.xr.isSessionSupported(
-              "immersive-ar"
-            );
-            if (!supported) {
-              alert("AR не поддерживается на этом устройстве");
-              return;
-            }
+        // Событие начала AR сессии
+        renderer.xr.addEventListener("sessionstart", () => {
+          console.log("AR сессия начата");
+          isARMode = true;
 
-            console.log("AR поддерживается, создаем сессию...");
+          // Скрываем элементы в AR режиме
+          elements.video.style.display = "none";
+          elements.filter1.style.display = "none";
+          elements.filter2.style.display = "none";
 
-            // Создаем сессию AR
-            const session = await navigator.xr.requestSession("immersive-ar", {
-              requiredFeatures: ["hit-test"],
-              optionalFeatures: ["dom-overlay"],
-              domOverlay: {root: document.body},
-            });
-
-            console.log("AR сессия создана");
-
-            // Привязываем сессию к рендереру
-            await renderer.xr.setSession(session);
-
-            isARMode = true;
-
-            // Скрываем элементы в AR режиме
-            elements.video.style.display = "none";
-            elements.filter1.style.display = "none";
-            elements.filter2.style.display = "none";
-
-            // Останавливаем камеру устройства
-            if (currentStream) {
-              currentStream.getTracks().forEach((track) => track.stop());
-            }
-
-            // Уменьшаем модель для AR
-            if (model) {
-              model.scale.set(0.03, 0.03, 0.03);
-              model.position.set(0, 0, 0);
-            }
-
-            elements.status.textContent = "AR режим активирован";
-
-            // Событие окончания сессии
-            session.addEventListener("end", () => {
-              console.log("AR сессия завершена");
-              isARMode = false;
-
-              // Показываем элементы обратно
-              elements.video.style.display = "block";
-              elements.filter1.style.display = "block";
-              elements.filter2.style.display = "block";
-
-              // Восстанавливаем модель
-              if (model) {
-                model.scale.set(0.1, 0.1, 0.1);
-                model.position.set(0, -0.2, 0);
-              }
-
-              // Перезапускаем камеру
-              setTimeout(initCamera, 100);
-
-              elements.status.textContent = "AR режим завершен";
-            });
-          } catch (error) {
-            console.error("Ошибка AR:", error);
-            elements.status.textContent = "Ошибка AR: " + error.message;
+          // Останавливаем камеру устройства
+          if (currentStream) {
+            currentStream.getTracks().forEach((track) => track.stop());
+            currentStream = null;
           }
+
+          // Уменьшаем модель для AR
+          if (model) {
+            model.scale.set(0.03, 0.03, 0.03);
+            model.position.set(0, 0, 0);
+          }
+
+          elements.status.textContent =
+            "AR режим активирован! Смотрите вокруг через камеру.";
         });
+
+        // Событие окончания AR сессии
+        renderer.xr.addEventListener("sessionend", () => {
+          console.log("AR сессия завершена");
+          isARMode = false;
+
+          // Показываем элементы обратно
+          elements.video.style.display = "block";
+          elements.filter1.style.display = "block";
+          elements.filter2.style.display = "block";
+
+          // Восстанавливаем модель
+          if (model) {
+            model.scale.set(0.1, 0.1, 0.1);
+            model.position.set(0, -0.2, 0);
+          }
+
+          // Перезапускаем камеру
+          setTimeout(initCamera, 100);
+
+          elements.status.textContent = "AR режим завершен";
+        });
+
+        console.log("AR режим настроен");
       }
 
       // ========== ФИЛЬТРЫ ==========
@@ -458,10 +529,7 @@
           filterChanged = true;
           elements.filter1.style.opacity = "0";
           elements.filter2.style.opacity = "1";
-
-          // Меняем курсор
           elements.container.style.cursor = "default";
-
           console.log("Фильтр изменен");
         });
       }
@@ -469,22 +537,18 @@
       // ========== СНИМОК ЭКРАНА ==========
       function setupScreenshot() {
         elements.screenshotBtn.addEventListener("click", () => {
-          // Скрываем кнопки
           const buttons = document.querySelectorAll(".controls button");
           buttons.forEach((btn) => (btn.style.visibility = "hidden"));
 
           setTimeout(() => {
-            // Создаем canvas
             const tempCanvas = document.createElement("canvas");
             tempCanvas.width = elements.canvas.width;
             tempCanvas.height = elements.canvas.height;
             const ctx = tempCanvas.getContext("2d");
 
-            // Черный фон
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-            // Видео
             ctx.drawImage(
               elements.video,
               0,
@@ -492,11 +556,8 @@
               tempCanvas.width,
               tempCanvas.height
             );
-
-            // 3D модель
             ctx.drawImage(elements.canvas, 0, 0);
 
-            // Активный фильтр
             const activeFilter =
               elements.filter1.style.opacity === "1"
                 ? elements.filter1
@@ -510,16 +571,13 @@
               tempCanvas.height
             );
 
-            // Скачивание
             const link = document.createElement("a");
             link.download = `ar-photo-${Date.now()}.png`;
             link.href = tempCanvas.toDataURL("image/png");
             link.click();
 
-            // Уведомление
             showNotification("Снимок сохранен!");
 
-            // Возвращаем кнопки
             setTimeout(() => {
               buttons.forEach((btn) => (btn.style.visibility = "visible"));
             }, 500);
@@ -539,19 +597,18 @@
       function animate() {
         animationFrameId = requestAnimationFrame(animate);
 
-        // ОБНОВЛЯЕМ АНИМАЦИЮ МОДЕЛИ
+        // Обновляем анимацию модели
         if (mixer) {
-          // Фиксированный дельта-тайм для плавности
           const delta = clock.getDelta();
           mixer.update(delta);
         }
 
-        // МЕДЛЕННОЕ ВРАЩЕНИЕ МОДЕЛИ (только не в AR)
+        // Медленное вращение модели (только не в AR)
         if (model && !isARMode) {
-          model.rotation.y += 0.003; // Очень медленно
+          model.rotation.y += 0.003;
         }
 
-        // РЕНДЕР
+        // Рендер
         renderer.render(scene, camera);
       }
 
@@ -570,6 +627,12 @@
         try {
           console.log("=== ЗАПУСК ПРИЛОЖЕНИЯ ===");
 
+          // Инициализируем polyfill для WebXR
+          if (!("xr" in navigator)) {
+            console.log("Использую WebXR polyfill");
+            new WebXRPolyfill();
+          }
+
           // 1. Three.js
           initThreeJS();
 
@@ -580,7 +643,7 @@
           loadModel();
 
           // 4. Настройка AR
-          initAR();
+          setupAR();
 
           // 5. Фильтры
           setupFilters();
@@ -617,7 +680,12 @@
       window.addEventListener("beforeunload", cleanup);
 
       // ========== ЗАПУСК ==========
-      initApp();
+      // Ждем загрузки всех скриптов
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initApp);
+      } else {
+        initApp();
+      }
     </script>
   </body>
 </html>
