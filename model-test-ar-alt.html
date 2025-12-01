@@ -2,42 +2,58 @@
 <html lang="ru">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>AR Модель с Фильтром</title>
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+		/>
+		<title>AR Модель Лошади</title>
 		<style>
 			* {
 				margin: 0;
 				padding: 0;
 				box-sizing: border-box;
+				-webkit-tap-highlight-color: transparent;
 			}
 
 			body {
-				font-family: sans-serif;
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 				background: #000;
 				color: white;
+				width: 100vw;
 				height: 100vh;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				padding: 20px;
 				overflow: hidden;
+				position: fixed;
+			}
+
+			.header {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				padding: 20px;
+				text-align: center;
+				background: rgba(0, 0, 0, 0.7);
+				backdrop-filter: blur(10px);
+				z-index: 1000;
 			}
 
 			h1 {
-				margin: 10px 0;
-				text-align: center;
 				font-size: 22px;
+				margin: 0;
+			}
+
+			#status {
+				font-size: 14px;
+				color: #aaa;
+				margin-top: 5px;
 			}
 
 			#container {
-				position: relative;
+				position: absolute;
+				top: 0;
+				left: 0;
 				width: 100%;
-				max-width: 400px;
-				height: 60vh;
-				border-radius: 20px;
-				overflow: hidden;
-				background: #111;
-				margin-top: 10px;
+				height: 100%;
 			}
 
 			#camera-video {
@@ -45,7 +61,7 @@
 				width: 100%;
 				height: 100%;
 				object-fit: cover;
-				transform: scaleX(-1); /* Зеркальное отображение */
+				transform: scaleX(-1);
 				z-index: 1;
 				display: block;
 			}
@@ -58,17 +74,15 @@
 				display: block;
 			}
 
-			.filter {
+			.filter-overlay {
 				position: absolute;
-				top: 0;
-				left: 0;
 				width: 100%;
 				height: 100%;
 				z-index: 3;
 				mix-blend-mode: screen;
 				pointer-events: none;
 				opacity: 1;
-				transition: opacity 0.5s ease;
+				transition: opacity 0.5s;
 				display: block;
 			}
 
@@ -77,51 +91,86 @@
 			}
 
 			.controls {
-				margin-top: 20px;
+				position: fixed;
+				bottom: 30px;
+				left: 0;
+				right: 0;
 				display: flex;
-				gap: 10px;
+				justify-content: center;
+				gap: 15px;
+				z-index: 1000;
 			}
 
 			button {
-				background: rgba(255, 255, 255, 0.1);
-				border: 1px solid rgba(255, 255, 255, 0.3);
+				background: rgba(0, 0, 0, 0.8);
+				border: 2px solid rgba(255, 255, 255, 0.3);
 				color: white;
-				padding: 10px 20px;
-				border-radius: 25px;
+				padding: 12px 25px;
+				border-radius: 50px;
+				font-size: 16px;
 				cursor: pointer;
-				font-size: 14px;
+				backdrop-filter: blur(10px);
+				transition: all 0.2s;
+			}
+
+			button:hover,
+			button:active {
+				background: rgba(255, 255, 255, 0.1);
+				border-color: white;
 			}
 
 			#ar-button {
-				background: #007aff;
-				border-color: #007aff;
-				font-weight: bold;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				border: none;
+				font-weight: 600;
 			}
 
-			#status {
-				margin-top: 10px;
-				text-align: center;
-				color: #aaa;
-				font-size: 14px;
-				min-height: 20px;
+			.ar-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				z-index: 1001;
+				display: none;
 			}
 
 			.ar-instruction {
 				position: absolute;
-				top: 20px;
+				top: 100px;
 				left: 20px;
 				right: 20px;
 				background: rgba(0, 0, 0, 0.8);
 				color: white;
 				padding: 15px;
-				border-radius: 10px;
+				border-radius: 15px;
 				text-align: center;
-				z-index: 1000;
-				display: none;
+				font-size: 16px;
+				backdrop-filter: blur(10px);
 			}
 
-			.hidden {
-				display: none;
+			.ar-controls {
+				position: absolute;
+				bottom: 30px;
+				left: 0;
+				right: 0;
+				display: flex;
+				justify-content: center;
+				gap: 20px;
+			}
+
+			.ar-btn {
+				width: 60px;
+				height: 60px;
+				border-radius: 50%;
+				background: rgba(0, 0, 0, 0.7);
+				border: 2px solid white;
+				color: white;
+				font-size: 24px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
 			}
 
 			.loading {
@@ -132,31 +181,59 @@
 				font-size: 18px;
 				z-index: 1000;
 			}
+
+			.error {
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				background: rgba(255, 50, 50, 0.9);
+				color: white;
+				padding: 20px 30px;
+				border-radius: 15px;
+				text-align: center;
+				max-width: 80%;
+				display: none;
+				z-index: 1000;
+			}
+
+			.hidden {
+				display: none !important;
+			}
 		</style>
 	</head>
 	<body>
-		<div class="loading" id="loading">Загрузка...</div>
-
-		<h1>AR Модель с Фильтром</h1>
+		<div class="header">
+			<h1>AR Модель Лошади</h1>
+			<div id="status">Загрузка...</div>
+		</div>
 
 		<div id="container">
 			<video id="camera-video" autoplay playsinline muted></video>
 			<canvas id="renderCanvas"></canvas>
 			<img
-				class="filter"
+				class="filter-overlay"
 				id="filter1"
 				src="./assets/ice-1.png"
-				alt="Фильтр 1"
+				alt="Фильтр"
 			/>
 			<img
-				class="filter"
+				class="filter-overlay"
 				id="filter2"
 				src="./assets/ice-4.png"
-				alt="Фильтр 2"
+				alt="Фильтр"
 			/>
+		</div>
 
+		<div class="ar-overlay" id="ar-overlay">
 			<div class="ar-instruction" id="ar-instruction">
-				AR режим: наведите камеру на поверхность
+				Наведите камеру на горизонтальную поверхность<br />
+				и коснитесь экрана, чтобы разместить модель
+			</div>
+			<div class="ar-controls" id="ar-controls">
+				<div class="ar-btn" id="rotate-btn">↻</div>
+				<div class="ar-btn" id="scale-btn">⊕</div>
+				<div class="ar-btn" id="exit-btn">✕</div>
 			</div>
 		</div>
 
@@ -166,259 +243,555 @@
 			<button id="ar-button" class="hidden">🚀 AR</button>
 		</div>
 
-		<div id="status">Инициализация...</div>
+		<div class="loading" id="loading">Загрузка...</div>
+		<div class="error" id="error"></div>
 
-		<!-- Только базовые библиотеки -->
+		<!-- Three.js с поддержкой WebXR -->
 		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/webxr/ARButton.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/webxr/XRControllerModelFactory.min.js"></script>
 
 		<script>
-			// ===== ПРОВЕРЕННЫЙ И СТАБИЛЬНЫЙ КОД =====
-			let scene, camera, renderer, model
+			// ========== КОНСТАНТЫ И ПЕРЕМЕННЫЕ ==========
+			const DEBUG = true
+
+			let scene, camera, renderer, model, mixer
 			let videoStream = null
 			let isFilterChanged = false
 			let isARMode = false
+			let arSession = null
+			let hitTestSource = null
+			let modelPlaced = false
 			let currentCamera = 'environment'
-			let arSupported = false
+			let animationId = null
+			let reticle = null
 
-			// Дожидаемся полной загрузки DOM
-			document.addEventListener('DOMContentLoaded', function () {
-				// Сначала находим все элементы
-				window.elements = {
-					container: document.getElementById('container'),
-					video: document.getElementById('camera-video'),
-					canvas: document.getElementById('renderCanvas'),
-					filter1: document.getElementById('filter1'),
-					filter2: document.getElementById('filter2'),
-					switchBtn: document.getElementById('switch-camera'),
-					screenshotBtn: document.getElementById('screenshot'),
-					arButton: document.getElementById('ar-button'),
-					status: document.getElementById('status'),
-					arInstruction: document.getElementById('ar-instruction'),
-					loading: document.getElementById('loading'),
-				}
+			// Элементы DOM
+			const elements = {
+				container: null,
+				video: null,
+				canvas: null,
+				filter1: null,
+				filter2: null,
+				switchBtn: null,
+				screenshotBtn: null,
+				arButton: null,
+				status: null,
+				loading: null,
+				error: null,
+				arOverlay: null,
+				arInstruction: null,
+				arControls: null,
+				rotateBtn: null,
+				scaleBtn: null,
+				exitBtn: null,
+			}
 
-				// Проверяем что все элементы найдены
-				for (let key in window.elements) {
-					if (!window.elements[key]) {
-						console.error('Не найден элемент:', key)
+			// ========== ИНИЦИАЛИЗАЦИЯ DOM ==========
+			function initDOM() {
+				console.log('Инициализация DOM...')
+
+				const elementIds = [
+					'container',
+					'camera-video',
+					'renderCanvas',
+					'filter1',
+					'filter2',
+					'switch-camera',
+					'screenshot',
+					'ar-button',
+					'status',
+					'loading',
+					'error',
+					'ar-overlay',
+					'ar-instruction',
+					'ar-controls',
+					'rotate-btn',
+					'scale-btn',
+					'exit-btn',
+				]
+
+				elementIds.forEach(id => {
+					const element = document.getElementById(id)
+					if (!element) {
+						console.error(`Элемент #${id} не найден!`)
 					}
+					elements[id.replace('-', '')] = element
+				})
+
+				// Проверяем критически важные элементы
+				if (!elements.container || !elements.canvas) {
+					showError('Критические элементы не найдены. Перезагрузите страницу.')
+					throw new Error('DOM elements not found')
 				}
+			}
 
-				// Запускаем приложение
-				init()
-			})
-
-			// ===== ИНИЦИАЛИЗАЦИЯ =====
+			// ========== ОСНОВНАЯ ИНИЦИАЛИЗАЦИЯ ==========
 			async function init() {
 				try {
-					console.log('=== ЗАПУСК ПРИЛОЖЕНИЯ ===')
+					log('=== НАЧАЛО ИНИЦИАЛИЗАЦИИ ===')
 
-					// 1. Проверяем поддержку AR
-					await checkARSupport()
+					// 1. Инициализируем DOM элементы
+					initDOM()
 
 					// 2. Инициализируем Three.js
 					initThreeJS()
 
-					// 3. Запускаем камеру
+					// 3. Запускаем камеру устройства
 					await startCamera()
 
-					// 4. Создаем модель (маленькую)
-					createModel()
+					// 4. Загружаем модель лошади
+					await loadModel()
 
-					// 5. Настраиваем события
+					// 5. Проверяем поддержку AR
+					await checkARSupport()
+
+					// 6. Настраиваем события
 					setupEvents()
 
-					// 6. Запускаем анимацию
-					animate()
+					// 7. Запускаем анимацию
+					startAnimation()
 
-					// Скрываем индикатор загрузки
-					window.elements.loading.style.display = 'none'
-					window.elements.status.textContent =
+					elements.loading.classList.add('hidden')
+					elements.status.textContent =
 						'Готово! Нажмите на экран для смены фильтра.'
 
-					console.log('=== ПРИЛОЖЕНИЕ ЗАПУЩЕНО ===')
+					log('=== ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА ===')
 				} catch (error) {
 					console.error('Ошибка инициализации:', error)
-					window.elements.status.textContent = 'Ошибка: ' + error.message
-					window.elements.loading.textContent = 'Ошибка загрузки'
+					showError('Ошибка загрузки: ' + error.message)
 				}
 			}
 
-			// ===== ПРОВЕРКА AR =====
-			async function checkARSupport() {
-				// Простая проверка на мобильные устройства
-				const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-				const hasCamera = !!navigator.mediaDevices?.getUserMedia
-
-				arSupported = isMobile && hasCamera
-
-				if (arSupported) {
-					window.elements.arButton.classList.remove('hidden')
-					console.log('AR кнопка показана (мобильное устройство)')
-				}
-			}
-
-			// ===== THREE.JS =====
+			// ========== THREE.JS ИНИЦИАЛИЗАЦИЯ ==========
 			function initThreeJS() {
-				// Убедимся что container существует
-				if (!window.elements.container) {
-					throw new Error('Контейнер не найден')
-				}
+				log('Инициализация Three.js...')
 
-				const width = window.elements.container.clientWidth
-				const height = window.elements.container.clientHeight
-
-				console.log('Размер контейнера:', width, 'x', height)
-
-				// 1. Сцена
+				// Сцена
 				scene = new THREE.Scene()
 
-				// 2. Камера Three.js - маленький угол обзора для маленькой модели
-				camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100)
-				camera.position.set(0, 0.3, 1.5) // Ближе и выше
+				// Камера (маленькая для маленькой модели)
+				const aspect = window.innerWidth / window.innerHeight
+				camera = new THREE.PerspectiveCamera(45, aspect, 0.01, 100)
+				camera.position.set(0, 0.3, 1.5)
 
-				// 3. Рендерер
+				// Рендерер
 				renderer = new THREE.WebGLRenderer({
-					canvas: window.elements.canvas,
+					canvas: elements.canvas,
 					alpha: true,
 					antialias: true,
 					preserveDrawingBuffer: true,
 				})
-				renderer.setSize(width, height)
-				renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+				renderer.setSize(window.innerWidth, window.innerHeight)
+				renderer.setPixelRatio(window.devicePixelRatio)
 				renderer.setClearColor(0x000000, 0)
+				renderer.shadowMap.enabled = true
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
-				// 4. Освещение
-				const ambientLight = new THREE.AmbientLight(0xffffff, 1)
+				// Включаем WebXR
+				renderer.xr.enabled = true
+
+				// Освещение
+				const ambientLight = new THREE.AmbientLight(0xffffff, 1.0)
 				scene.add(ambientLight)
 
-				const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
-				directionalLight.position.set(1, 2, 3)
+				const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2)
+				directionalLight.position.set(2, 4, 5)
+				directionalLight.castShadow = true
 				scene.add(directionalLight)
+
+				log('Three.js инициализирован')
 			}
 
-			// ===== СОЗДАНИЕ МОДЕЛИ (МАЛЕНЬКОЙ) =====
-			function createModel() {
-				// Создаем очень маленькую модель
-				const group = new THREE.Group()
+			// ========== ЗАГРУЗКА МОДЕЛИ ЛОШАДИ ==========
+			async function loadModel() {
+				return new Promise(resolve => {
+					log('Загрузка модели лошади...')
+					elements.status.textContent = 'Загрузка модели...'
 
-				// Тело
-				const bodyGeometry = new THREE.BoxGeometry(0.15, 0.1, 0.3)
-				const bodyMaterial = new THREE.MeshPhongMaterial({
-					color: 0x8b4513,
-					shininess: 30,
+					const loader = new THREE.GLTFLoader()
+
+					loader.load(
+						'./assets/model/Horse_animation.gltf',
+						gltf => {
+							log('Модель лошади загружена')
+							model = gltf.scene
+
+							// Настройка модели (маленькая)
+							model.scale.set(0.15, 0.15, 0.15)
+							model.position.set(0, -0.5, 0)
+							model.rotation.y = Math.PI / 6
+
+							// Настройка материалов и теней
+							model.traverse(child => {
+								if (child.isMesh) {
+									child.castShadow = true
+									child.receiveShadow = true
+									if (child.material) {
+										child.material.metalness = 0.1
+										child.material.roughness = 0.8
+									}
+								}
+							})
+
+							scene.add(model)
+
+							// Анимация
+							if (gltf.animations && gltf.animations.length > 0) {
+								log(`Найдено анимаций: ${gltf.animations.length}`)
+								mixer = new THREE.AnimationMixer(model)
+
+								// Проигрываем первую анимацию
+								const action = mixer.clipAction(gltf.animations[0])
+								action.play()
+								mixer.timeScale = 0.7
+							}
+
+							elements.status.textContent = 'Модель загружена'
+							resolve()
+						},
+						progress => {
+							const percent = Math.round(
+								(progress.loaded / progress.total) * 100
+							)
+							elements.status.textContent = `Загрузка модели: ${percent}%`
+						},
+						error => {
+							console.error('Ошибка загрузки модели:', error)
+							showError(
+								'Не удалось загрузить модель лошади. Проверьте файл ./assets/model/Horse_animation.gltf'
+							)
+							resolve()
+						}
+					)
 				})
-				const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
-				body.position.set(0, 0.05, 0)
-				group.add(body)
-
-				// Голова
-				const headGeometry = new THREE.SphereGeometry(0.06, 16, 16)
-				const headMaterial = new THREE.MeshPhongMaterial({
-					color: 0x8b4513,
-					shininess: 30,
-				})
-				const head = new THREE.Mesh(headGeometry, headMaterial)
-				head.position.set(0, 0.1, 0.2)
-				group.add(head)
-
-				// Ноги
-				const legGeometry = new THREE.CylinderGeometry(0.015, 0.015, 0.15, 8)
-				const legMaterial = new THREE.MeshPhongMaterial({
-					color: 0x8b4513,
-					shininess: 30,
-				})
-
-				// Позиции ног
-				const legPositions = [
-					[-0.06, -0.05, 0.08], // передняя левая
-					[0.06, -0.05, 0.08], // передняя правая
-					[-0.06, -0.05, -0.08], // задняя левая
-					[0.06, -0.05, -0.08], // задняя правая
-				]
-
-				legPositions.forEach(pos => {
-					const leg = new THREE.Mesh(legGeometry, legMaterial)
-					leg.position.set(pos[0], pos[1], pos[2])
-					group.add(leg)
-				})
-
-				model = group
-				model.scale.set(0.8, 0.8, 0.8) // Маленький масштаб
-				model.position.set(0, -0.2, 0) // Низко
-				scene.add(model)
-
-				console.log('Модель создана (маленькая)')
 			}
 
-			// ===== КАМЕРА УСТРОЙСТВА =====
+			// ========== КАМЕРА УСТРОЙСТВА ==========
 			async function startCamera() {
 				try {
+					log('Запуск камеры устройства...')
+					elements.status.textContent = 'Запрос доступа к камере...'
+
 					// Останавливаем предыдущий поток
 					if (videoStream) {
 						videoStream.getTracks().forEach(track => track.stop())
 					}
 
-					window.elements.status.textContent = 'Запуск камеры...'
-
 					const constraints = {
 						video: {
 							facingMode: currentCamera,
-							width: { ideal: 1280 },
-							height: { ideal: 720 },
+							width: { ideal: 1920 },
+							height: { ideal: 1080 },
 						},
 						audio: false,
 					}
 
 					videoStream = await navigator.mediaDevices.getUserMedia(constraints)
-					window.elements.video.srcObject = videoStream
+					elements.video.srcObject = videoStream
 
-					// Ждем пока видео начнет играть
-					await new Promise(resolve => {
-						window.elements.video.onloadedmetadata = () => {
-							window.elements.video.play().then(resolve).catch(resolve)
+					// Ждем готовности видео
+					await new Promise((resolve, reject) => {
+						elements.video.onloadedmetadata = () => {
+							elements.video.play().then(resolve).catch(reject)
 						}
+						elements.video.onerror = reject
+
+						// Таймаут на случай проблем
+						setTimeout(() => {
+							if (elements.video.readyState < 2) {
+								reject(new Error('Таймаут загрузки видео'))
+							}
+						}, 5000)
 					})
 
-					console.log('Камера запущена')
+					log('Камера устройства запущена')
+					elements.status.textContent = 'Камера активирована'
 				} catch (error) {
 					console.error('Ошибка камеры:', error)
-					// Не прерываем выполнение, показываем тестовый фон
-					window.elements.video.style.display = 'none'
-					window.elements.container.style.background = '#333'
-					throw new Error('Не удалось запустить камеру. Проверьте разрешения.')
+					elements.video.style.display = 'none'
+					elements.container.style.background =
+						'linear-gradient(45deg, #000, #222)'
+					throw new Error('Не удалось получить доступ к камере')
 				}
 			}
 
-			// ===== СОБЫТИЯ =====
+			// ========== ПРОВЕРКА И НАСТРОЙКА AR ==========
+			async function checkARSupport() {
+				if (!('xr' in navigator)) {
+					log('WebXR не поддерживается браузером')
+					return
+				}
+
+				try {
+					log('Проверка поддержки AR...')
+
+					const supported = await navigator.xr.isSessionSupported(
+						'immersive-ar'
+					)
+
+					if (supported) {
+						log('AR поддерживается!')
+
+						// Создаем кнопку AR через Three.js
+						const arButton = THREE.ARButton.createButton(renderer, {
+							requiredFeatures: ['hit-test'],
+							optionalFeatures: ['dom-overlay'],
+							domOverlay: { root: document.body },
+						})
+
+						arButton.id = 'ar-button'
+						arButton.textContent = '🚀 AR'
+						arButton.style.cssText = `
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        border: none;
+                        color: white;
+                        padding: 12px 25px;
+                        border-radius: 50px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    `
+
+						// Заменяем нашу кнопку
+						elements.arButton.replaceWith(arButton)
+						elements.arButton = arButton
+
+						// События AR
+						setupAREvents()
+					} else {
+						log('AR не поддерживается на этом устройстве')
+					}
+				} catch (error) {
+					console.error('Ошибка проверки AR:', error)
+					log('Ошибка при проверке поддержки AR')
+				}
+			}
+
+			function setupAREvents() {
+				elements.arButton.addEventListener('click', () => {
+					if (isARMode) {
+						exitAR()
+					} else {
+						startAR()
+					}
+				})
+			}
+
+			// ========== AR РЕЖИМ ==========
+			async function startAR() {
+				try {
+					log('Запуск AR сессии...')
+					elements.status.textContent = 'Запуск AR...'
+
+					// Создаем ретикул для AR
+					createReticle()
+
+					// Переходим в AR режим
+					enterARMode()
+
+					// AR уже запускается через кнопку Three.js
+					// Дополнительная настройка будет в обработчиках сессии
+				} catch (error) {
+					console.error('Ошибка запуска AR:', error)
+					showError('Ошибка запуска AR: ' + error.message)
+					exitAR()
+				}
+			}
+
+			function createReticle() {
+				// Удаляем старый ретикул если есть
+				if (reticle) {
+					scene.remove(reticle)
+				}
+
+				const geometry = new THREE.RingGeometry(0.05, 0.1, 32)
+				const material = new THREE.MeshBasicMaterial({
+					color: 0xffffff,
+					transparent: true,
+					opacity: 0.8,
+				})
+
+				reticle = new THREE.Mesh(geometry, material)
+				reticle.matrixAutoUpdate = false
+				reticle.visible = false
+				scene.add(reticle)
+			}
+
+			function enterARMode() {
+				isARMode = true
+				modelPlaced = false
+
+				// Скрываем видео и фильтры
+				elements.video.style.display = 'none'
+				elements.filter1.style.display = 'none'
+				elements.filter2.style.display = 'none'
+
+				// Показываем AR оверлей
+				elements.arOverlay.style.display = 'block'
+
+				// Скрываем модель до размещения
+				if (model) {
+					model.visible = false
+					model.scale.set(0.05, 0.05, 0.05) // Очень маленькая для AR
+				}
+
+				elements.status.textContent =
+					'AR режим: найдите поверхность и коснитесь экрана'
+
+				log('Вход в AR режим')
+			}
+
+			function exitAR() {
+				isARMode = false
+
+				// Показываем видео и фильтры
+				elements.video.style.display = 'block'
+				elements.filter1.style.display = 'block'
+				elements.filter2.style.display = 'block'
+
+				// Скрываем AR оверлей
+				elements.arOverlay.style.display = 'none'
+
+				// Выходим из XR сессии если она активна
+				if (renderer.xr.getSession()) {
+					renderer.xr.getSession().end()
+				}
+
+				// Возвращаем модель
+				if (model) {
+					model.visible = true
+					model.scale.set(0.15, 0.15, 0.15)
+					model.position.set(0, -0.5, 0)
+				}
+
+				// Перезапускаем камеру
+				setTimeout(() => {
+					startCamera()
+				}, 100)
+
+				elements.status.textContent = 'AR режим завершен'
+
+				log('Выход из AR режима')
+			}
+
+			// ========== ОБРАБОТЧИКИ AR ==========
+			function onSessionStart() {
+				log('AR сессия начата')
+
+				// Создаем hit test источник
+				const session = renderer.xr.getSession()
+				const referenceSpace = renderer.xr.getReferenceSpace()
+
+				session
+					.requestHitTestSource({ space: referenceSpace })
+					.then(source => {
+						hitTestSource = source
+					})
+					.catch(console.error)
+
+				// Обработчик выбора (клик/тап)
+				session.addEventListener('select', onSelect)
+
+				// Обработчик завершения сессии
+				session.addEventListener('end', onSessionEnd)
+			}
+
+			function onSessionEnd() {
+				log('AR сессия завершена')
+				hitTestSource = null
+				exitAR()
+			}
+
+			function onSelect(event) {
+				if (!modelPlaced && model && hitTestSource) {
+					const frame = event.frame
+					const hitTestResults = frame.getHitTestResults(hitTestSource)
+
+					if (hitTestResults.length > 0) {
+						const hit = hitTestResults[0]
+						const pose = hit.getPose(renderer.xr.getReferenceSpace())
+
+						if (pose) {
+							// Размещаем модель
+							model.position.set(
+								pose.transform.position.x,
+								pose.transform.position.y,
+								pose.transform.position.z
+							)
+
+							model.visible = true
+							modelPlaced = true
+
+							// Скрываем инструкцию
+							elements.arInstruction.style.display = 'none'
+
+							log('Модель размещена в AR')
+						}
+					}
+				}
+			}
+
+			function updateAR(frame) {
+				if (!isARMode || !hitTestSource || !reticle) return
+
+				const referenceSpace = renderer.xr.getReferenceSpace()
+				const hitTestResults = frame.getHitTestResults(hitTestSource)
+
+				// Обновляем ретикул
+				if (hitTestResults.length > 0 && !modelPlaced) {
+					const hit = hitTestResults[0]
+					const pose = hit.getPose(referenceSpace)
+
+					reticle.visible = true
+					reticle.matrix.fromArray(pose.transform.matrix)
+				} else {
+					reticle.visible = false
+				}
+			}
+
+			// ========== СОБЫТИЯ И УПРАВЛЕНИЕ ==========
 			function setupEvents() {
+				log('Настройка событий...')
+
 				// Смена фильтра
-				window.elements.container.addEventListener('click', () => {
-					if (!isFilterChanged && !isARMode) {
+				elements.container.addEventListener('click', e => {
+					if (!isFilterChanged && !isARMode && e.target === elements.canvas) {
 						isFilterChanged = true
-						window.elements.filter1.style.opacity = '0'
-						window.elements.filter2.style.opacity = '1'
-						window.elements.container.style.cursor = 'default'
-						console.log('Фильтр изменен')
+						elements.filter1.style.opacity = '0'
+						elements.filter2.style.opacity = '1'
+						elements.container.style.cursor = 'default'
+						log('Фильтр изменен')
 					}
 				})
 
 				// Переключение камеры
-				window.elements.switchBtn.addEventListener('click', () => {
+				elements.switchBtn.addEventListener('click', () => {
 					currentCamera =
 						currentCamera === 'environment' ? 'user' : 'environment'
 					startCamera()
 				})
 
 				// Скриншот
-				window.elements.screenshotBtn.addEventListener('click', takeScreenshot)
+				elements.screenshotBtn.addEventListener('click', takeScreenshot)
 
-				// AR режим
-				window.elements.arButton.addEventListener('click', () => {
-					alert(
-						'Для работы AR режима:\n\n1. Откройте страницу по HTTPS\n2. Используйте Chrome на Android или Safari на iOS\n3. Разрешите доступ к камере\n\nСтраница должна быть загружена с реального сервера (не localhost)'
-					)
+				// AR контролы
+				elements.rotateBtn.addEventListener('click', () => {
+					if (model && modelPlaced) {
+						model.rotation.y += Math.PI / 4
+					}
 				})
+
+				elements.scaleBtn.addEventListener('click', () => {
+					if (model && modelPlaced) {
+						const scale =
+							model.scale.x === 0.05 ? 0.1 : model.scale.x === 0.1 ? 0.15 : 0.05
+						model.scale.set(scale, scale, scale)
+					}
+				})
+
+				elements.exitBtn.addEventListener('click', exitAR)
 
 				// Ресайз окна
 				window.addEventListener('resize', onResize)
@@ -426,30 +799,30 @@
 				// Обработка ошибок
 				window.addEventListener('error', e => {
 					console.error('Глобальная ошибка:', e.error)
-					window.elements.status.textContent = 'Ошибка: ' + e.message
+					showError('Произошла ошибка: ' + e.message)
 				})
+
+				// Обработка отзыва разрешения камеры
+				if (videoStream) {
+					videoStream.getVideoTracks()[0].addEventListener('ended', () => {
+						showError('Доступ к камере отозван. Обновите страницу.')
+					})
+				}
+
+				log('События настроены')
 			}
 
-			// ===== СКРИНШОТ =====
+			// ========== СКРИНШОТ ==========
 			function takeScreenshot() {
-				// Временно скрываем элементы
-				const controls = document.querySelector('.controls')
-				const arInstruction = window.elements.arInstruction
-				const status = window.elements.status
-
-				const controlsVisible = controls.style.visibility
-				const instructionVisible = arInstruction.style.visibility
-				const statusVisible = status.style.visibility
-
-				controls.style.visibility = 'hidden'
-				arInstruction.style.visibility = 'hidden'
-				status.style.visibility = 'hidden'
-
-				setTimeout(() => {
-					// Создаем временный canvas
+				if (isARMode) {
+					// В AR режиме используем WebGL canvas
+					const dataUrl = elements.canvas.toDataURL('image/png')
+					downloadImage(dataUrl, 'ar-screenshot')
+				} else {
+					// В обычном режиме комбинируем видео и 3D
 					const tempCanvas = document.createElement('canvas')
-					tempCanvas.width = window.elements.canvas.width
-					tempCanvas.height = window.elements.canvas.height
+					tempCanvas.width = elements.canvas.width
+					tempCanvas.height = elements.canvas.height
 					const ctx = tempCanvas.getContext('2d')
 
 					// Черный фон
@@ -457,13 +830,11 @@
 					ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
 
 					// Видео с камеры (зеркальное)
-					if (window.elements.video.videoWidth > 0) {
-						// Сохраняем состояние
+					if (elements.video.videoWidth > 0) {
 						ctx.save()
-						// Отражаем по горизонтали
 						ctx.scale(-1, 1)
 						ctx.drawImage(
-							window.elements.video,
+							elements.video,
 							-tempCanvas.width,
 							0,
 							tempCanvas.width,
@@ -473,79 +844,127 @@
 					}
 
 					// 3D модель
-					ctx.drawImage(window.elements.canvas, 0, 0)
+					ctx.drawImage(elements.canvas, 0, 0)
 
 					// Активный фильтр
 					const activeFilter =
-						window.elements.filter1.style.opacity === '1'
-							? window.elements.filter1
-							: window.elements.filter2
+						elements.filter1.style.opacity === '1'
+							? elements.filter1
+							: elements.filter2
 					ctx.globalCompositeOperation = 'screen'
 					ctx.drawImage(activeFilter, 0, 0, tempCanvas.width, tempCanvas.height)
 
-					// Скачивание
-					const link = document.createElement('a')
-					link.download = `model-${Date.now()}.png`
-					link.href = tempCanvas.toDataURL('image/png')
-					link.click()
-
-					// Уведомление
-					window.elements.status.textContent = 'Снимок сохранен!'
-					setTimeout(() => {
-						window.elements.status.textContent = 'Готово!'
-					}, 2000)
-
-					// Возвращаем видимость
-					controls.style.visibility = controlsVisible
-					arInstruction.style.visibility = instructionVisible
-					status.style.visibility = statusVisible
-				}, 100)
-			}
-
-			// ===== АНИМАЦИЯ =====
-			function animate() {
-				requestAnimationFrame(animate)
-
-				// Медленное вращение модели
-				if (model && !isARMode) {
-					model.rotation.y += 0.005
+					const dataUrl = tempCanvas.toDataURL('image/png')
+					downloadImage(dataUrl, '3d-model')
 				}
 
-				// Рендер
-				if (renderer && scene && camera) {
-					renderer.render(scene, camera)
-				}
+				elements.status.textContent = 'Снимок сохранен!'
+				setTimeout(() => {
+					elements.status.textContent = isARMode ? 'AR режим активен' : 'Готово'
+				}, 2000)
 			}
 
-			// ===== РЕСАЙЗ =====
+			function downloadImage(dataUrl, filename) {
+				const link = document.createElement('a')
+				link.download = `${filename}-${Date.now()}.png`
+				link.href = dataUrl
+				document.body.appendChild(link)
+				link.click()
+				document.body.removeChild(link)
+			}
+
+			// ========== АНИМАЦИЯ ==========
+			function startAnimation() {
+				function animate(time) {
+					animationId = requestAnimationFrame(animate)
+
+					// Обновляем анимацию модели
+					if (mixer) {
+						const delta = time ? (time - (mixer._lastTime || 0)) * 0.001 : 0.016
+						mixer._lastTime = time
+						mixer.update(delta)
+					}
+
+					// Вращение модели в обычном режиме
+					if (model && !isARMode) {
+						model.rotation.y += 0.005
+					}
+
+					// В AR режиме обновляем состояние
+					if (isARMode && renderer.xr.isPresenting) {
+						const frame = renderer.xr.getFrame()
+						updateAR(frame)
+					}
+
+					// Рендер
+					if (renderer && scene && camera) {
+						renderer.render(scene, camera)
+					}
+				}
+
+				animate()
+			}
+
+			// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 			function onResize() {
-				if (!window.elements.container) return
+				if (!camera || !renderer) return
 
-				const width = window.elements.container.clientWidth
-				const height = window.elements.container.clientHeight
+				camera.aspect = window.innerWidth / window.innerHeight
+				camera.updateProjectionMatrix()
+				renderer.setSize(window.innerWidth, window.innerHeight)
+			}
 
-				if (camera && renderer) {
-					camera.aspect = width / height
-					camera.updateProjectionMatrix()
-					renderer.setSize(width, height)
+			function showError(message) {
+				console.error('Ошибка:', message)
+				elements.error.textContent = message
+				elements.error.style.display = 'block'
+				elements.status.textContent = 'Ошибка'
+
+				// Автоскрытие через 5 секунд
+				setTimeout(() => {
+					elements.error.style.display = 'none'
+				}, 5000)
+			}
+
+			function log(message) {
+				if (DEBUG) {
+					console.log(`[AR App] ${message}`)
 				}
 			}
 
-			// ===== ОЧИСТКА =====
+			// ========== ОЧИСТКА ==========
 			function cleanup() {
+				log('Очистка ресурсов...')
+
+				if (animationId) {
+					cancelAnimationFrame(animationId)
+				}
+
 				if (videoStream) {
 					videoStream.getTracks().forEach(track => track.stop())
 				}
+
+				if (arSession) {
+					arSession.end()
+				}
+			}
+
+			// ========== ЗАПУСК ==========
+			// Ждем полной загрузки DOM
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', init)
+			} else {
+				init()
 			}
 
 			// Очистка при закрытии
 			window.addEventListener('beforeunload', cleanup)
+			window.addEventListener('pagehide', cleanup)
 
-			// Защита от повторной инициализации
-			let initialized = false
-			if (!initialized) {
-				initialized = true
-			}
+			// Добавляем обработчики для Three.js XR
+			window.addEventListener('xrstart', onSessionStart)
+
+			log('Приложение загружено и готово к инициализации')
 		</script>
 	</body>
 </html>
