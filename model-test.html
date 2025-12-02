@@ -288,6 +288,9 @@
         ar
         ar-modes="webxr scene-viewer quick-look"
         autoplay>
+        <button slot="ar-button" id="custom-exit-button" style="display: none">
+          Выйти из AR
+        </button>
       </model-viewer>
 
       <div class="filter-click-area" id="filterClickArea"></div>
@@ -577,6 +580,29 @@
           console.log("Принудительный показ модального окна (Ctrl+M)");
           showExitModal();
         }
+      });
+
+      const customButton = document.getElementById("custom-exit-button");
+
+      modelViewer.addEventListener("ar-status", (event) => {
+        if (event.detail.status === "session-started") {
+          // Показать кастомную кнопку при старте AR
+          customButton.style.display = "block";
+
+          // Скрыть стандартную кнопку
+          const defaultButton = modelViewer.shadowRoot.querySelector(
+            ".default-exit-webxr-ar-button"
+          );
+          if (defaultButton) {
+            defaultButton.style.display = "none";
+          }
+        } else if (event.detail.status === "session-ended") {
+          customButton.style.display = "none";
+        }
+      });
+
+      customButton.addEventListener("click", () => {
+        modelViewer.exitXR();
       });
     </script>
   </body>
