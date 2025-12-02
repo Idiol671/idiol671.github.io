@@ -309,6 +309,7 @@
       ✓ Модель разблокирована для взаимодействия
     </div>
 
+    <button id="test-launch">test-launch</button>
     <button id="refresh">Перезагрузить камеру</button>
 
     <div class="modal-overlay" id="arExitModal">
@@ -605,6 +606,25 @@
         console.log("Страница загружена, модель скрыта");
         // Модель уже скрыта через CSS opacity: 0
       });
+
+      const launch = document.getElementById("test-launch");
+
+      launch.addEventListener("click",launchAR)
+
+      async function launchAR() {
+        try {
+          // Программный запуск AR
+          const sessionStarted = await modelViewer?.activateAR();
+
+          if (sessionStarted) {
+            console.log('AR сессия успешно запущена');
+          } else {
+            console.log('AR не доступен на этом устройстве');
+          }
+        } catch (error) {
+          console.error('Ошибка запуска AR:', error);
+        }
+      }
     </script>
   </body>
 </html>
