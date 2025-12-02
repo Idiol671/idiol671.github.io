@@ -309,7 +309,7 @@
       ✓ Модель разблокирована для взаимодействия
     </div>
 
-    <button id="test-launch">test-launch</button>
+    <button id="test-launch">test-launch1</button>
     <button id="refresh">Перезагрузить камеру</button>
 
     <div class="modal-overlay" id="arExitModal">
@@ -614,7 +614,7 @@
       async function launchAR() {
         try {
           // Программный запуск AR
-          const sessionStarted = await modelViewer?.activateAR();
+          const sessionStarted = await modelViewer?.activateAR("webxr");
 
           if (sessionStarted) {
             console.log('AR сессия успешно запущена');
