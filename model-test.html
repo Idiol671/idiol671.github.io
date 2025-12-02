@@ -278,6 +278,29 @@
         font-style: italic;
         display: none;
       }
+
+      /* Стили для уведомления об авто-нажатии AR */
+      .auto-ar-notification {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 50px;
+        font-weight: 600;
+        z-index: 2000;
+        box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        text-align: center;
+        min-width: 300px;
+        max-width: 90%;
+      }
+
+      .auto-ar-notification.show {
+        transform: translateX(-50%) translateY(0);
+      }
     </style>
   </head>
 
@@ -311,6 +334,14 @@
 
     <button id="refresh">Перезагрузить камеру</button>
 
+    <!-- Уведомление об авто-нажатии AR -->
+    <div class="auto-ar-notification" id="autoArNotification">
+      <div>🎉 Финальный фильтр активирован!</div>
+      <div style="font-size: 0.9em; opacity: 0.9">
+        Автоматически открывается AR...
+      </div>
+    </div>
+
     <div class="modal-overlay" id="arExitModal">
       <div class="modal-content">
         <div class="modal-icon">✨</div>
@@ -338,6 +369,7 @@
       );
       const arExitModal = document.getElementById("arExitModal");
       const closeModalBtn = document.getElementById("closeModalBtn");
+      const autoArNotification = document.getElementById("autoArNotification");
       let currentStream;
 
       const filters = [filter1, filter2, filter3];
@@ -347,6 +379,7 @@
       // Простой флаг для отслеживания AR
       let wasInAR = false;
       let arModalTimer = null;
+      let autoArTriggered = false; // Флаг для отслеживания авто-нажатия AR
 
       async function initCamera() {
         if (currentStream) {
@@ -394,6 +427,8 @@
         // Проверяем, достигли ли последнего фильтра (Ice-4)
         if (currentFilterIndex === filters.length - 1) {
           unlockModel();
+          // Активируем авто-нажатие AR кнопки
+          activateAutoAR();
         }
       }
 
@@ -418,6 +453,90 @@
         currentFilterText.textContent = `Фильтр: ${filterNames[currentFilterIndex]} (Финальный)`;
 
         console.log("Модель и кнопка AR теперь видны");
+      }
+
+      function activateAutoAR() {
+        // Показываем уведомление
+        autoArNotification.classList.add("show");
+
+        console.log("Активация авто-нажатия AR кнопки...");
+
+        // Ждем пока модель полностью загрузится и станет видимой
+        setTimeout(() => {
+          // Находим кнопку AR внутри model-viewer
+          const arButton = modelViewer.shadowRoot.querySelector(".ar-button");
+
+          if (arButton) {
+            console.log("Кнопка AR найдена, нажимаем...");
+
+            // Симулируем клик по кнопке AR
+            arButton.click();
+
+            // Добавляем небольшую задержку и пробуем еще раз для надежности
+            setTimeout(() => {
+              if (!wasInAR) {
+                console.log("Повторная попытка нажатия AR кнопки...");
+                arButton.click();
+              }
+            }, 500);
+
+            // Прячем уведомление через 2 секунды
+            setTimeout(() => {
+              autoArNotification.classList.remove("show");
+            }, 2000);
+
+            autoArTriggered = true;
+          } else {
+            console.log(
+              "Кнопка AR не найдена, пробуем альтернативный метод..."
+            );
+
+            // Альтернативный метод: используем API model-viewer для запуска AR
+            if (modelViewer.activateAR) {
+              modelViewer.activateAR();
+              console.log("AR активирован через API activateAR()");
+            } else {
+              console.log(
+                "Метод activateAR не доступен, пробуем найти кнопку позже..."
+              );
+
+              // Пытаемся найти кнопку еще раз через некоторое время
+              const retryInterval = setInterval(() => {
+                const retryButton =
+                  modelViewer.shadowRoot.querySelector(".ar-button");
+                if (retryButton) {
+                  console.log(
+                    "Кнопка AR найдена при повторной попытке, нажимаем..."
+                  );
+                  retryButton.click();
+                  clearInterval(retryInterval);
+
+                  setTimeout(() => {
+                    autoArNotification.classList.remove("show");
+                  }, 2000);
+
+                  autoArTriggered = true;
+                }
+              }, 200);
+
+              // Останавливаем попытки через 5 секунд
+              setTimeout(() => {
+                clearInterval(retryInterval);
+                if (!autoArTriggered) {
+                  console.log(
+                    "Не удалось найти кнопку AR, показываем инструкцию"
+                  );
+                  autoArNotification.innerHTML =
+                    '<div>🎉 Финальный фильтр активирован!</div><div style="font-size: 0.9em; opacity: 0.9;">Нажмите кнопку "Посмотреть в AR" ниже</div>';
+
+                  setTimeout(() => {
+                    autoArNotification.classList.remove("show");
+                  }, 4000);
+                }
+              }, 5000);
+            }
+          }
+        }, 1500); // Задержка для гарантии что модель видна
       }
 
       function showExitModal() {
@@ -481,6 +600,7 @@
         if (e.target && e.target.slot === "ar-button") {
           console.log("AR кнопка нажата");
           wasInAR = true;
+          autoArTriggered = false; // Сбрасываем флаг авто-нажатия
         }
       });
 
@@ -491,6 +611,8 @@
         if (event.detail.status === "session-started") {
           console.log("AR сессия началась");
           wasInAR = true;
+          // Прячем уведомление если оно еще видно
+          autoArNotification.classList.remove("show");
         }
 
         if (event.detail.status === "session-ended") {
@@ -589,6 +711,10 @@
         filterClickArea.classList.remove("disabled");
         modelUnlockedMessage.style.display = "none";
 
+        // Скрываем уведомление если оно видно
+        autoArNotification.classList.remove("show");
+        autoArTriggered = false;
+
         console.log("Состояние сброшено к начальному");
       });
 
@@ -597,6 +723,11 @@
         if (e.key === "m" && e.ctrlKey) {
           console.log("Принудительный показ модального окна (Ctrl+M)");
           showExitModal();
+        }
+        // Тестовая комбинация для авто-AR
+        if (e.key === "a" && e.ctrlKey && e.shiftKey) {
+          console.log("Принудительная активация авто-AR (Ctrl+Shift+A)");
+          activateAutoAR();
         }
       });
 
