@@ -63,6 +63,12 @@
         background: transparent;
         --poster-color: transparent;
         pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.8s ease;
+      }
+
+      model-viewer.visible {
+        opacity: 1;
       }
 
       model-viewer.interactive {
@@ -94,6 +100,14 @@
         min-width: 200px;
         text-align: center;
         font-family: inherit;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.3s ease;
+      }
+
+      model-viewer::part(default-ar-button).visible {
+        opacity: 1;
+        visibility: visible;
       }
 
       model-viewer::part(default-exit-webxr-ar-button) {
@@ -397,10 +411,47 @@
           "Достигнут финальный фильтр. Разблокируем модель для взаимодействия."
         );
 
-        modelViewer.classList.add("interactive");
+        // Показываем 3D модель
+        modelViewer.classList.add("visible");
+
+        // Разблокируем модель для взаимодействия
+        setTimeout(() => {
+          modelViewer.classList.add("interactive");
+        }, 800); // Ждем завершения анимации opacity
+
+        // Показываем кнопку AR
+        showARButton();
+
+        // Отключаем область кликов для фильтров
         filterClickArea.classList.add("disabled");
+
+        // Показываем сообщение о разблокировке модели
         modelUnlockedMessage.style.display = "block";
         currentFilterText.textContent = `Фильтр: ${filterNames[currentFilterIndex]} (Финальный)`;
+
+        console.log("Модель и кнопка AR теперь видны");
+      }
+
+      function showARButton() {
+        // Получаем кнопку AR внутри model-viewer
+        const arButton =
+          modelViewer.shadowRoot.querySelector(".default-ar-button");
+        if (arButton) {
+          arButton.classList.add("visible");
+          console.log("Кнопка AR сделана видимой");
+        } else {
+          // Если кнопка еще не загружена, пробуем снова через некоторое время
+          setTimeout(showARButton, 100);
+        }
+      }
+
+      // Функция для скрытия кнопки AR (при сбросе)
+      function hideARButton() {
+        const arButton =
+          modelViewer.shadowRoot.querySelector(".default-ar-button");
+        if (arButton) {
+          arButton.classList.remove("visible");
+        }
       }
 
       function showExitModal() {
@@ -566,7 +617,10 @@
         currentFilterIndex = 0;
         currentFilterText.textContent = `Фильтр: ${filterNames[0]}`;
 
-        modelViewer.classList.remove("interactive");
+        // Скрываем модель и кнопку AR
+        modelViewer.classList.remove("visible", "interactive");
+        hideARButton();
+
         filterClickArea.classList.remove("disabled");
         modelUnlockedMessage.style.display = "none";
 
@@ -579,6 +633,12 @@
           console.log("Принудительный показ модального окна (Ctrl+M)");
           showExitModal();
         }
+      });
+
+      // Инициализация: скрываем модель при загрузке
+      window.addEventListener("load", () => {
+        console.log("Страница загружена, модель скрыта");
+        // Модель уже скрыта через CSS opacity: 0
       });
     </script>
   </body>
