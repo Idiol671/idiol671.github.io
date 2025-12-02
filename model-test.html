@@ -1,387 +1,387 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script
-            type="module"
-            src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <title>Модель</title>
 
     <style>
-        :root {
-            color-scheme: dark;
-            font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-            background-color: #050608;
-            color: #f4f5f7;
-        }
+      :root {
+        color-scheme: dark;
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        background-color: #050608;
+        color: #f4f5f7;
+      }
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 24px;
-            padding: 24px;
-            position: relative;
-        }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        padding: 24px;
+        position: relative;
+      }
 
-        h1 {
-            font-size: clamp(1.5rem, 3vw, 2.5rem);
-            margin: 0;
-            text-align: center;
-        }
+      h1 {
+        font-size: clamp(1.5rem, 3vw, 2.5rem);
+        margin: 0;
+        text-align: center;
+      }
 
-        #camera-wrapper {
-            position: relative;
-            width: min(90vw, 640px);
-            aspect-ratio: 3 / 4;
-            border-radius: 24px;
-            overflow: hidden;
-            background: #0d0f14;
-            box-shadow: 0 20px 60px rgba(6, 9, 20, 0.55);
-        }
+      #camera-wrapper {
+        position: relative;
+        width: min(90vw, 640px);
+        aspect-ratio: 3 / 4;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #0d0f14;
+        box-shadow: 0 20px 60px rgba(6, 9, 20, 0.55);
+      }
 
-        video {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 0;
-            filter: saturate(1.1) contrast(1.05);
-        }
+      video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        filter: saturate(1.1) contrast(1.05);
+      }
 
-        model-viewer {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            background: transparent;
-            --poster-color: transparent;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-        }
+      model-viewer {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        background: transparent;
+        --poster-color: transparent;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.8s ease;
+      }
 
-        model-viewer.visible {
-            opacity: 1;
-        }
+      model-viewer.visible {
+        opacity: 1;
+      }
 
-        model-viewer.interactive {
-            pointer-events: auto;
-            cursor: grab;
-        }
+      model-viewer.interactive {
+        pointer-events: auto;
+        cursor: grab;
+      }
 
-        model-viewer.interactive:active {
-            cursor: grabbing;
-        }
+      model-viewer.interactive:active {
+        cursor: grabbing;
+      }
 
-        model-viewer::part(default-ar-button) {
-            pointer-events: auto;
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50px;
-            padding: 14px 32px;
-            border: none;
-            color: white;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-            z-index: 10;
-            min-width: 200px;
-            text-align: center;
-            font-family: inherit;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.3s ease;
-        }
+      model-viewer::part(default-ar-button) {
+        pointer-events: auto;
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50px;
+        padding: 14px 32px;
+        border: none;
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        z-index: 10;
+        min-width: 200px;
+        text-align: center;
+        font-family: inherit;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.3s ease;
+      }
 
-        model-viewer::part(default-ar-button).visible {
-            opacity: 1;
-            visibility: visible;
-        }
+      model-viewer::part(default-ar-button).visible {
+        opacity: 1;
+        visibility: visible;
+      }
 
-        model-viewer::part(default-exit-webxr-ar-button) {
-            display: none;
-        }
+      model-viewer::part(default-exit-webxr-ar-button) {
+        display: none;
+      }
 
-        model-viewer::part(default-ar-button):hover {
-            transform: translateX(-50%) translateY(-2px);
-            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
-        }
+      model-viewer::part(default-ar-button):hover {
+        transform: translateX(-50%) translateY(-2px);
+        box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+      }
 
-        model-viewer::part(default-ar-button):active {
-            transform: translateX(-50%) translateY(0);
-        }
+      model-viewer::part(default-ar-button):active {
+        transform: translateX(-50%) translateY(0);
+      }
 
-        model-viewer::part(default-ar-button):focus {
-            outline: 2px solid rgba(102, 126, 234, 0.5);
-            outline-offset: 2px;
-        }
+      model-viewer::part(default-ar-button):focus {
+        outline: 2px solid rgba(102, 126, 234, 0.5);
+        outline-offset: 2px;
+      }
 
-        .filter-click-area {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 3;
-            cursor: pointer;
-        }
+      .filter-click-area {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 3;
+        cursor: pointer;
+      }
 
-        .filter-click-area.disabled {
-            display: none;
-        }
+      .filter-click-area.disabled {
+        display: none;
+      }
 
-        .overlay {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            mix-blend-mode: screen;
-            pointer-events: none;
-            z-index: 2;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        mix-blend-mode: screen;
+        pointer-events: none;
+        z-index: 2;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
 
-        .overlay.active {
-            opacity: 1;
-        }
+      .overlay.active {
+        opacity: 1;
+      }
 
-        button {
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 999px;
-            padding: 10px 24px;
-            background: transparent;
-            color: inherit;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: border-color 0.2s ease, color 0.2s ease,
-            background 0.2s ease;
-        }
+      button {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        padding: 10px 24px;
+        background: transparent;
+        color: inherit;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: border-color 0.2s ease, color 0.2s ease,
+          background 0.2s ease;
+      }
 
-        button:hover {
-            border-color: rgba(255, 255, 255, 0.5);
-            background: rgba(255, 255, 255, 0.05);
-        }
+      button:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.05);
+      }
 
-        /* Стили для модального окна */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(5, 6, 8, 0.95);
-            backdrop-filter: blur(10px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
+      /* Стили для модального окна */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(5, 6, 8, 0.95);
+        backdrop-filter: blur(10px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
 
-        .modal-overlay.show {
-            display: flex;
-            opacity: 1;
-        }
+      .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+      }
 
-        .modal-content {
-            background: linear-gradient(145deg, #0d0f14, #151821);
-            border-radius: 24px;
-            padding: 40px;
-            width: min(90%, 380px);
-            text-align: center;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-        }
+      .modal-content {
+        background: linear-gradient(145deg, #0d0f14, #151821);
+        border-radius: 24px;
+        padding: 40px;
+        width: min(90%, 380px);
+        text-align: center;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+      }
 
-        .modal-overlay.show .modal-content {
-            transform: translateY(0);
-        }
+      .modal-overlay.show .modal-content {
+        transform: translateY(0);
+      }
 
-        .modal-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            animation: pulse 2s infinite;
-        }
+      .modal-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite;
+      }
 
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-            100% {
-                transform: scale(1);
-            }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
         }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
 
-        .modal-title {
-            font-size: 1.8rem;
-            margin-bottom: 16px;
-            color: #fff;
-            font-weight: 600;
-        }
+      .modal-title {
+        font-size: 1.8rem;
+        margin-bottom: 16px;
+        color: #fff;
+        font-weight: 600;
+      }
 
-        .modal-message {
-            font-size: 1.1rem;
-            color: #a1acc8;
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
+      .modal-message {
+        font-size: 1.1rem;
+        color: #a1acc8;
+        margin-bottom: 30px;
+        line-height: 1.5;
+      }
 
-        .modal-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            padding: 14px 32px;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-            width: 100%;
-        }
+      .modal-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 14px 32px;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        width: 100%;
+      }
 
-        .modal-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
-        }
+      .modal-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+      }
 
-        .modal-button:active {
-            transform: translateY(0);
-        }
+      .modal-button:active {
+        transform: translateY(0);
+      }
 
-        .filter-indicator {
-            font-size: 1rem;
-            color: #4fc3f7;
-            margin-top: 8px;
-            text-align: center;
-            height: 24px;
-        }
+      .filter-indicator {
+        font-size: 1rem;
+        color: #4fc3f7;
+        margin-top: 8px;
+        text-align: center;
+        height: 24px;
+      }
 
-        .model-unlocked-message {
-            font-size: 0.9rem;
-            color: #81c784;
-            margin-top: 4px;
-            text-align: center;
-            height: 20px;
-            font-style: italic;
-            display: none;
-        }
+      .model-unlocked-message {
+        font-size: 0.9rem;
+        color: #81c784;
+        margin-top: 4px;
+        text-align: center;
+        height: 20px;
+        font-style: italic;
+        display: none;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-<h1>Живой фильтр для камеры</h1>
+  <body>
+    <h1>Живой фильтр для камеры</h1>
 
-<div id="camera-wrapper">
-    <video id="cam" autoplay playsinline muted></video>
+    <div id="camera-wrapper">
+      <video id="cam" autoplay playsinline muted></video>
 
-    <model-viewer
-            id="model"
-            alt="3D Model"
-            src="./assets/model/Horse_animation.gltf"
-            camera-controls
-            ar
-            ar-modes="webxr scene-viewer quick-look"
-            autoplay>
-    </model-viewer>
+      <model-viewer
+        id="model"
+        alt="3D Model"
+        src="./assets/model/Horse_animation.gltf"
+        camera-controls
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        autoplay>
+      </model-viewer>
 
-    <div class="filter-click-area" id="filterClickArea"></div>
+      <div class="filter-click-area" id="filterClickArea"></div>
 
-    <img class="overlay active" id="filter1" src="/assets/ice-1.png"/>
-    <img class="overlay" id="filter2" src="/assets/ice-2.png"/>
-    <img class="overlay" id="filter3" src="/assets/ice-4.png"/>
-</div>
+      <img class="overlay active" id="filter1" src="/assets/ice-1.png" />
+      <img class="overlay" id="filter2" src="/assets/ice-2.png" />
+      <img class="overlay" id="filter3" src="/assets/ice-4.png" />
+    </div>
 
-<div class="filter-indicator" id="currentFilterText">Фильтр: Ice 1</div>
-<div class="model-unlocked-message" id="modelUnlockedMessage">
-    ✓ Модель разблокирована для взаимодействия
-</div>
+    <div class="filter-indicator" id="currentFilterText">Фильтр: Ice 1</div>
+    <div class="model-unlocked-message" id="modelUnlockedMessage">
+      ✓ Модель разблокирована для взаимодействия
+    </div>
 
-<button id="refresh">Перезагрузить камеру</button>
+    <button id="refresh">Перезагрузить камеру</button>
 
-<div class="modal-overlay" id="arExitModal">
-    <div class="modal-content">
+    <div class="modal-overlay" id="arExitModal">
+      <div class="modal-content">
         <div class="modal-icon">✨</div>
         <h2 class="modal-title">AR-сессия завершена</h2>
         <p class="modal-message">
-            Вы вернулись из режима дополненной реальности. Продолжайте
-            использовать фильтры!
+          Вы вернулись из режима дополненной реальности. Продолжайте
+          использовать фильтры!
         </p>
 
         <button class="modal-button" id="closeModalBtn">Продолжить</button>
+      </div>
     </div>
-</div>
 
-<script>
-    const video = document.getElementById("cam");
-    const cameraWrapper = document.getElementById("camera-wrapper");
-    const filter1 = document.getElementById("filter1");
-    const filter2 = document.getElementById("filter2");
-    const filter3 = document.getElementById("filter3");
-    const filterClickArea = document.getElementById("filterClickArea");
-    const modelViewer = document.getElementById("model");
-    const currentFilterText = document.getElementById("currentFilterText");
-    const modelUnlockedMessage = document.getElementById(
+    <script>
+      const video = document.getElementById("cam");
+      const cameraWrapper = document.getElementById("camera-wrapper");
+      const filter1 = document.getElementById("filter1");
+      const filter2 = document.getElementById("filter2");
+      const filter3 = document.getElementById("filter3");
+      const filterClickArea = document.getElementById("filterClickArea");
+      const modelViewer = document.getElementById("model");
+      const currentFilterText = document.getElementById("currentFilterText");
+      const modelUnlockedMessage = document.getElementById(
         "modelUnlockedMessage"
-    );
-    const arExitModal = document.getElementById("arExitModal");
-    const closeModalBtn = document.getElementById("closeModalBtn");
-    let currentStream;
+      );
+      const arExitModal = document.getElementById("arExitModal");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      let currentStream;
 
-    const filters = [filter1, filter2, filter3];
-    const filterNames = ["Ice 1", "Ice 2", "Ice 4"];
-    let currentFilterIndex = 0;
+      const filters = [filter1, filter2, filter3];
+      const filterNames = ["Ice 1", "Ice 2", "Ice 4"];
+      let currentFilterIndex = 0;
 
-    // Простой флаг для отслеживания AR
-    let wasInAR = false;
-    let arModalTimer = null;
+      // Простой флаг для отслеживания AR
+      let wasInAR = false;
+      let arModalTimer = null;
 
-    async function initCamera() {
+      async function initCamera() {
         if (currentStream) {
-            currentStream.getTracks().forEach((track) => track.stop());
+          currentStream.getTracks().forEach((track) => track.stop());
         }
 
         try {
-            let stream;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: {facingMode: {exact: "environment"}},
-                    audio: false,
-                });
-            } catch {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: {facingMode: "environment"},
-                    audio: false,
-                });
-            }
+          let stream;
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: {facingMode: {exact: "environment"}},
+              audio: false,
+            });
+          } catch {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: {facingMode: "environment"},
+              audio: false,
+            });
+          }
 
-            currentStream = stream;
-            video.srcObject = stream;
+          currentStream = stream;
+          video.srcObject = stream;
         } catch (err) {
-            console.error("Ошибка камеры:", err);
+          console.error("Ошибка камеры:", err);
         }
-    }
+      }
 
-    function changeFilter() {
+      function changeFilter() {
         // Убираем активный класс с текущего фильтра
         filters[currentFilterIndex].classList.remove("active");
 
@@ -395,18 +395,18 @@
         currentFilterText.textContent = `Фильтр: ${filterNames[currentFilterIndex]}`;
 
         console.log(
-            `Переключено на фильтр: ${filterNames[currentFilterIndex]}`
+          `Переключено на фильтр: ${filterNames[currentFilterIndex]}`
         );
 
         // Проверяем, достигли ли последнего фильтра (Ice-4)
         if (currentFilterIndex === filters.length - 1) {
-            unlockModel();
+          unlockModel();
         }
-    }
+      }
 
-    function unlockModel() {
+      function unlockModel() {
         console.log(
-            "Достигнут финальный фильтр. Разблокируем модель для взаимодействия."
+          "Достигнут финальный фильтр. Разблокируем модель для взаимодействия."
         );
 
         // Показываем 3D модель
@@ -414,11 +414,8 @@
 
         // Разблокируем модель для взаимодействия
         setTimeout(() => {
-            modelViewer.classList.add("interactive");
+          modelViewer.classList.add("interactive");
         }, 800); // Ждем завершения анимации opacity
-
-        // Показываем кнопку AR
-        showARButton();
 
         // Отключаем область кликов для фильтров
         filterClickArea.classList.add("disabled");
@@ -428,188 +425,166 @@
         currentFilterText.textContent = `Фильтр: ${filterNames[currentFilterIndex]} (Финальный)`;
 
         console.log("Модель и кнопка AR теперь видны");
-    }
+      }
 
-    function showARButton() {
-        // Получаем кнопку AR внутри model-viewer
-        const arButton =
-            modelViewer.shadowRoot.querySelector(".default-ar-button");
-        if (arButton) {
-            arButton.classList.add("visible");
-            console.log("Кнопка AR сделана видимой");
-        } else {
-            // Если кнопка еще не загружена, пробуем снова через некоторое время
-            setTimeout(showARButton, 100);
-        }
-    }
-
-    // Функция для скрытия кнопки AR (при сбросе)
-    function hideARButton() {
-        const arButton =
-            modelViewer.shadowRoot.querySelector(".default-ar-button");
-        if (arButton) {
-            arButton.classList.remove("visible");
-        }
-    }
-
-    function showExitModal() {
+      function showExitModal() {
         console.log("Показываем модальное окно выхода из AR");
 
         // Очищаем предыдущий таймер
         if (arModalTimer) {
-            clearTimeout(arModalTimer);
+          clearTimeout(arModalTimer);
         }
 
         // Устанавливаем задержку в 1 секунду
         arModalTimer = setTimeout(() => {
-            arExitModal.classList.add("show");
-            document.body.style.overflow = "hidden";
-            console.log("Модальное окно показано");
+          arExitModal.classList.add("show");
+          document.body.style.overflow = "hidden";
+          console.log("Модальное окно показано");
         }, 1000);
-    }
+      }
 
-    function hideExitModal() {
+      function hideExitModal() {
         if (arModalTimer) {
-            clearTimeout(arModalTimer);
-            arModalTimer = null;
+          clearTimeout(arModalTimer);
+          arModalTimer = null;
         }
 
         arExitModal.classList.remove("show");
         document.body.style.overflow = "auto";
         console.log("Модальное окно скрыто");
-    }
+      }
 
-    // Инициализация камеры
-    initCamera();
+      // Инициализация камеры
+      initCamera();
 
-    // Обработчик клика на область фильтров
-    filterClickArea.addEventListener("click", changeFilter);
+      // Обработчик клика на область фильтров
+      filterClickArea.addEventListener("click", changeFilter);
 
-    // Кнопка обновления камеры
-    document.getElementById("refresh").addEventListener("click", initCamera);
+      // Кнопка обновления камеры
+      document.getElementById("refresh").addEventListener("click", initCamera);
 
-    // Кнопка закрытия модального окна
-    closeModalBtn.addEventListener("click", hideExitModal);
+      // Кнопка закрытия модального окна
+      closeModalBtn.addEventListener("click", hideExitModal);
 
-    // Закрытие модального окна по клику на оверлей
-    arExitModal.addEventListener("click", (e) => {
+      // Закрытие модального окна по клику на оверлей
+      arExitModal.addEventListener("click", (e) => {
         if (e.target === arExitModal) {
-            hideExitModal();
+          hideExitModal();
         }
-    });
+      });
 
-    // Закрытие модального окна по клавише ESC
-    document.addEventListener("keydown", (e) => {
+      // Закрытие модального окна по клавише ESC
+      document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && arExitModal.classList.contains("show")) {
-            hideExitModal();
+          hideExitModal();
         }
-    });
+      });
 
-    // ========== ПРОСТАЯ И НАДЕЖНАЯ ЛОГИКА ДЛЯ AR ==========
+      // ========== ПРОСТАЯ И НАДЕЖНАЯ ЛОГИКА ДЛЯ AR ==========
 
-    // 1. Отслеживаем клик по AR кнопке
-    modelViewer.addEventListener("click", (e) => {
+      // 1. Отслеживаем клик по AR кнопке
+      modelViewer.addEventListener("click", (e) => {
         // Проверяем, была ли нажата AR кнопка
         if (e.target && e.target.slot === "ar-button") {
-            console.log("AR кнопка нажата");
-            wasInAR = true;
+          console.log("AR кнопка нажата");
+          wasInAR = true;
         }
-    });
+      });
 
-    // 2. Отслеживаем события model-viewer
-    modelViewer.addEventListener("ar-status", (event) => {
+      // 2. Отслеживаем события model-viewer
+      modelViewer.addEventListener("ar-status", (event) => {
         console.log("AR статус:", event.detail.status);
 
         if (event.detail.status === "session-started") {
-            console.log("AR сессия началась");
-            wasInAR = true;
+          console.log("AR сессия началась");
+          wasInAR = true;
         }
 
         if (event.detail.status === "session-ended") {
-            console.log("AR сессия завершилась (через ar-status)");
-            if (wasInAR) {
-                showExitModal();
-                wasInAR = false;
-            }
+          console.log("AR сессия завершилась (через ar-status)");
+          if (wasInAR) {
+            showExitModal();
+            wasInAR = false;
+          }
         }
-    });
+      });
 
-    // 3. Основной способ: отслеживаем visibilitychange
-    document.addEventListener("visibilitychange", () => {
+      // 3. Основной способ: отслеживаем visibilitychange
+      document.addEventListener("visibilitychange", () => {
         console.log("Visibility change:", document.visibilityState);
 
         if (document.visibilityState === "hidden") {
-            // Запоминаем, что страница скрылась (возможно, ушли в AR)
-            console.log("Страница скрыта - возможно ушли в AR");
+          // Запоминаем, что страница скрылась (возможно, ушли в AR)
+          console.log("Страница скрыта - возможно ушли в AR");
         }
 
         if (document.visibilityState === "visible") {
-            // Страница снова видима
-            console.log("Страница снова видима");
+          // Страница снова видима
+          console.log("Страница снова видима");
 
-            // Если были в AR и вернулись, показываем модалку
-            if (wasInAR) {
-                console.log("Возвращение из AR (visibilitychange)");
-                showExitModal();
-                wasInAR = false;
-            }
+          // Если были в AR и вернулись, показываем модалку
+          if (wasInAR) {
+            console.log("Возвращение из AR (visibilitychange)");
+            showExitModal();
+            wasInAR = false;
+          }
         }
-    });
+      });
 
-    // 4. Дополнительно: отслеживаем focus для надежности
-    window.addEventListener("focus", () => {
+      // 4. Дополнительно: отслеживаем focus для надежности
+      window.addEventListener("focus", () => {
         console.log("Window получил фокус");
 
         // Небольшая задержка для стабильности
         setTimeout(() => {
-            if (wasInAR) {
-                console.log("Возвращение из AR (focus)");
-                showExitModal();
-                wasInAR = false;
-            }
+          if (wasInAR) {
+            console.log("Возвращение из AR (focus)");
+            showExitModal();
+            wasInAR = false;
+          }
         }, 300);
-    });
+      });
 
-    // 5. Отслеживаем сообщения от AR сессии
-    window.addEventListener("message", (event) => {
+      // 5. Отслеживаем сообщения от AR сессии
+      window.addEventListener("message", (event) => {
         console.log("Получено сообщение:", event.data);
         // Некоторые AR реализации отправляют сообщения
-    });
+      });
 
-    // 6. Таймер для авто-сброса флага (на случай если AR не запустился)
-    setInterval(() => {
+      // 6. Таймер для авто-сброса флага (на случай если AR не запустился)
+      setInterval(() => {
         if (wasInAR && document.visibilityState === "visible") {
-            // Если флаг установлен больше 30 секунд и страница видима, сбрасываем
-            wasInAR = false;
-            console.log("Авто-сброс флага AR (таймаут)");
+          // Если флаг установлен больше 30 секунд и страница видима, сбрасываем
+          wasInAR = false;
+          console.log("Авто-сброс флага AR (таймаут)");
         }
-    }, 30000);
+      }, 30000);
 
-    // 7. Простой способ: отслеживаем время скрытия страницы
-    let pageHiddenTime = null;
-    document.addEventListener("visibilitychange", () => {
+      // 7. Простой способ: отслеживаем время скрытия страницы
+      let pageHiddenTime = null;
+      document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "hidden") {
-            pageHiddenTime = Date.now();
-            console.log("Страница скрыта в:", pageHiddenTime);
+          pageHiddenTime = Date.now();
+          console.log("Страница скрыта в:", pageHiddenTime);
         }
 
         if (document.visibilityState === "visible" && pageHiddenTime) {
-            const hiddenDuration = Date.now() - pageHiddenTime;
-            console.log("Страница была скрыта", hiddenDuration, "мс");
+          const hiddenDuration = Date.now() - pageHiddenTime;
+          console.log("Страница была скрыта", hiddenDuration, "мс");
 
-            // Если страница была скрыта более 1 секунды, считаем что это была AR сессия
-            if (hiddenDuration > 1000) {
-                console.log("Длительное скрытие - вероятно AR сессия");
-                showExitModal();
-            }
+          // Если страница была скрыта более 1 секунды, считаем что это была AR сессия
+          if (hiddenDuration > 1000) {
+            console.log("Длительное скрытие - вероятно AR сессия");
+            showExitModal();
+          }
 
-            pageHiddenTime = null;
+          pageHiddenTime = null;
         }
-    });
+      });
 
-    // Функция сброса к начальному состоянию
-    let lastClickTime = 0;
-    cameraWrapper.addEventListener("dblclick", () => {
+      // Функция сброса к начальному состоянию
+      let lastClickTime = 0;
+      cameraWrapper.addEventListener("dblclick", () => {
         filters.forEach((filter) => filter.classList.remove("active"));
         filters[0].classList.add("active");
         currentFilterIndex = 0;
@@ -617,27 +592,26 @@
 
         // Скрываем модель и кнопку AR
         modelViewer.classList.remove("visible", "interactive");
-        hideARButton();
 
         filterClickArea.classList.remove("disabled");
         modelUnlockedMessage.style.display = "none";
 
         console.log("Состояние сброшено к начальному");
-    });
+      });
 
-    // Для тестирования: кнопка для принудительного показа модалки
-    document.addEventListener("keydown", (e) => {
+      // Для тестирования: кнопка для принудительного показа модалки
+      document.addEventListener("keydown", (e) => {
         if (e.key === "m" && e.ctrlKey) {
-            console.log("Принудительный показ модального окна (Ctrl+M)");
-            showExitModal();
+          console.log("Принудительный показ модального окна (Ctrl+M)");
+          showExitModal();
         }
-    });
+      });
 
-    // Инициализация: скрываем модель при загрузке
-    window.addEventListener("load", () => {
+      // Инициализация: скрываем модель при загрузке
+      window.addEventListener("load", () => {
         console.log("Страница загружена, модель скрыта");
         // Модель уже скрыта через CSS opacity: 0
-    });
-</script>
-</body>
+      });
+    </script>
+  </body>
 </html>
