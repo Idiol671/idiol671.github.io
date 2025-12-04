@@ -81,7 +81,7 @@
         margin: 0;
         padding: 0;
         width: 100%;
-        height: 100vh;
+        height: 100dvh;
         overflow: hidden;
         font-family: sans-serif;
       }
@@ -89,7 +89,7 @@
       .fill {
         position: relative;
         width: 100%;
-        height: 100vh;
+        height: 100dvh; /* Исправлено с 100vh на 100dvh */
         display: flex;
         flex-direction: column;
         background: url("assets/background.png");
@@ -166,8 +166,9 @@
         animation: iceGlow 3s ease-in-out infinite alternate;
       }
 
+      /* Ключевое изменение: ice-4 НЕ исчезает при melting */
       .ice-overlay.melting {
-        opacity: 0.7;
+        opacity: 1; /* Важно: остается 1, а не 0! */
         filter: brightness(1.5) contrast(0.8) blur(2px);
         transform: scale(1.02);
         animation: iceMelt 4s forwards;
@@ -191,26 +192,26 @@
           transform: scale(1);
         }
         20% {
-          opacity: 0.9;
+          opacity: 1;
           filter: brightness(1.3) contrast(0.9) blur(1px);
         }
         40% {
-          opacity: 0.7;
+          opacity: 1;
           filter: brightness(1.5) contrast(0.8) blur(2px);
           transform: scale(1.01);
         }
         60% {
-          opacity: 0.5;
+          opacity: 1;
           filter: brightness(1.8) contrast(0.7) blur(3px);
           transform: scale(1.02);
         }
         80% {
-          opacity: 0.3;
+          opacity: 1;
           filter: brightness(2) contrast(0.6) blur(4px);
           transform: scale(1.03);
         }
         100% {
-          opacity: 0;
+          opacity: 1; /* Ключевое: остается 1! */
           filter: brightness(2.5) contrast(0.5) blur(5px);
           transform: scale(1.05);
         }
@@ -273,6 +274,7 @@
         cursor: grabbing;
       }
 
+      /* Стили для кнопки AR - УЛУЧШЕННЫЕ */
       model-viewer::part(default-ar-button) {
         position: absolute;
         bottom: 20px;
@@ -293,16 +295,22 @@
         text-align: center;
         opacity: 0;
         visibility: hidden;
+        pointer-events: auto !important;
       }
 
       model-viewer.visible::part(default-ar-button) {
         opacity: 1;
         visibility: visible;
+        pointer-events: auto !important;
       }
 
       model-viewer::part(default-ar-button):hover {
         transform: translateX(-50%) translateY(-2px);
         box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+      }
+
+      model-viewer::part(default-ar-button):active {
+        transform: translateX(-50%) translateY(0);
       }
 
       /* Индикатор загрузки */
@@ -525,7 +533,7 @@
         }
       }
 
-      // Смена фильтра - ИСПРАВЛЕННАЯ ВЕРСИЯ
+      // Смена фильтра - УПРОЩЕННАЯ ЛОГИКА
       function changeFilter() {
         console.log("Клик! Текущий фильтр:", currentFilterIndex);
 
@@ -539,18 +547,16 @@
           return;
         }
 
-        // Убираем активный класс только если это НЕ последний фильтр
-        // При переходе на ice-4 предыдущий фильтр скрывается, но ice-4 остается
-        if (currentFilterIndex < filters.length - 1) {
-          filters[currentFilterIndex].classList.remove("active");
-        }
+        // Скрываем предыдущий фильтр
+        filters[currentFilterIndex].classList.remove("active");
 
         // Переходим к следующему фильтру
         currentFilterIndex++;
 
+        // Активируем следующий фильтр
         if (currentFilterIndex < filters.length) {
           filters[currentFilterIndex].classList.add("active");
-          console.log("Переключили на фильтр:", currentFilterIndex);
+          console.log("Переключили на фильтр:", currentFilterIndex + 1);
 
           // Если это последний фильтр (ice-4)
           if (currentFilterIndex === filters.length - 1) {
@@ -558,7 +564,11 @@
               "Достигнут последний фильтр (ice-4), активируем финальный эффект"
             );
             filtersCompleted = true;
-            startFinalEffect();
+
+            // Запускаем финальный эффект с небольшой задержкой
+            setTimeout(() => {
+              startFinalEffect();
+            }, 300);
           }
         }
       }
@@ -588,10 +598,11 @@
 
             console.log("Прогресс завершен на 100%");
 
-            // Запускаем эффект таяния
+            // Запускаем эффект "таяния" (но ice-4 остается видимым!)
             setTimeout(() => {
               console.log("Запускаем анимацию таяния для ice-4");
-              // ice-4 получает класс melting, но active остается!
+              // Ключевое: ice-4 получает класс melting, но остается видимым!
+              // Класс active остается, opacity в CSS остается 1
               filters[currentFilterIndex].classList.add("melting");
 
               // Показываем модель
@@ -612,8 +623,23 @@
       function unlockModel() {
         console.log("Показываем 3D модель");
         modelViewer.classList.add("visible");
+
+        // Принудительно обновляем стили кнопки AR
         setTimeout(() => {
           modelViewer.classList.add("interactive");
+          console.log("Модель интерактивна, кнопка AR должна быть видна");
+
+          // Принудительно показываем кнопку AR
+          setTimeout(() => {
+            const arButton =
+              modelViewer.shadowRoot?.querySelector(".ar-button");
+            if (arButton) {
+              console.log("Кнопка AR найдена в shadow DOM");
+              arButton.style.opacity = "1";
+              arButton.style.visibility = "visible";
+              arButton.style.pointerEvents = "auto";
+            }
+          }, 500);
         }, 500);
 
         // Отключаем клики по области фильтров
@@ -675,13 +701,12 @@
         }
       });
 
-      // ОТСЛЕЖИВАНИЕ ВЫХОДА ИЗ AR ЧЕРЕЗ VISIBILITY CHANGE
+      // ОТСЛЕЖИВАНИЕ ВЫХОДА ИЗ AR
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
           console.log("Страница стала видимой - возможно выход из AR");
           if (wasInAR && filtersCompleted) {
             console.log("Были в AR и фильтры завершены - показываем модалку");
-            // Небольшая задержка для надежности
             setTimeout(() => {
               showModal();
             }, 300);
@@ -691,6 +716,7 @@
 
         if (document.visibilityState === "hidden") {
           console.log("Страница скрыта - возможно вход в AR");
+          wasInAR = true;
         }
       });
 
@@ -704,7 +730,7 @@
         }
 
         if (event.detail.status === "session-ended") {
-          console.log("AR сессия завершилась (через ar-status)");
+          console.log("AR сессия завершилась");
           if (wasInAR && filtersCompleted) {
             console.log("Показываем модальное окно через ar-status событие");
             setTimeout(() => {
@@ -715,10 +741,24 @@
         }
       });
 
+      // Принудительный клик по кнопке AR для тестирования
+      function forceArButtonClick() {
+        const arButton = modelViewer.shadowRoot?.querySelector(".ar-button");
+        if (arButton) {
+          console.log("Принудительный клик по кнопке AR");
+          arButton.click();
+          return true;
+        }
+        console.log("Кнопка AR не найдена");
+        return false;
+      }
+
       // Для тестирования
       window.debug = {
         showModal: showModal,
         hideModal: hideModal,
+        forceArButtonClick: forceArButtonClick,
+        unlockModel: unlockModel,
         getState: () => ({
           currentFilterIndex,
           filtersCompleted,
@@ -726,8 +766,18 @@
           ice4Active: filter3.classList.contains("active"),
           ice4Melting: filter3.classList.contains("melting"),
           wasInAR,
+          modelVisible: modelViewer.classList.contains("visible"),
         }),
+        simulateClicks: () => {
+          changeFilter();
+          setTimeout(() => changeFilter(), 500);
+        },
       };
+
+      console.log("Тестовые функции доступны в window.debug");
+      console.log(
+        "Используйте debug.simulateClicks() для быстрого тестирования"
+      );
     </script>
   </body>
 </html>
