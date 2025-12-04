@@ -744,6 +744,7 @@
       let filtersCompleted = false;
       let instructionShown = false;
       let treeShownAfterAR = false;
+      let autoArTriggered = false; // Флаг для отслеживания авто-запуска AR
 
       // Инициализация камеры
       async function initCamera() {
@@ -906,85 +907,61 @@
           }
         }
       }
+
+      // Автоматический запуск AR - ИСПРАВЛЕННАЯ ВЕРСИЯ
       function activateAutoAR() {
-        // Показываем уведомление
-        autoArNotification.classList.add("show");
-
         console.log("Автоматически запускаем AR...");
+        autoArTriggered = true;
 
-        // Даем время на завершение анимаций
+        // Ждем пока модель станет полностью видимой
         setTimeout(() => {
-          // Находим кнопку AR внутри model-viewer
-          const arButton = modelViewer.shadowRoot.querySelector(".ar-button");
+          // Пробуем через API model-viewer
+          if (modelViewer.activateAR) {
+            console.log("Активируем AR через activateAR() API");
+            modelViewer.activateAR();
+            wasInAR = true;
+            return;
+          }
 
-          if (arButton) {
-            console.log("Кнопка AR найдена, автоматически нажимаем...");
-
-            arButton.click();
-
-            // Повторная попытка для надежности
-            setTimeout(() => {
-              if (!wasInAR) {
-                console.log("Повторная попытка нажатия AR кнопки...");
+          // Пробуем найти кнопку в shadow DOM
+          const findAndClickArButton = () => {
+            if (modelViewer.shadowRoot) {
+              const arButton = modelViewer.shadowRoot.querySelector(
+                '.ar-button, [part="ar-button"], button'
+              );
+              if (arButton) {
+                console.log("Кнопка AR найдена в shadow DOM, кликаем...");
                 arButton.click();
+                wasInAR = true;
+                return true;
               }
+            }
+            return false;
+          };
+
+          // Пробуем сразу найти кнопку
+          if (!findAndClickArButton()) {
+            console.log("Кнопка AR не найдена сразу, ждем...");
+
+            // Ждем и пробуем снова
+            const retryInterval = setInterval(() => {
+              if (findAndClickArButton()) {
+                clearInterval(retryInterval);
+                return;
+              }
+              console.log("Повторная попытка найти кнопку AR...");
             }, 500);
 
-            // Прячем уведомление
+            // Прекращаем попытки через 5 секунд
             setTimeout(() => {
-              autoArNotification.classList.remove("show");
-            }, 2000);
-
-            autoArTriggered = true;
-            wasInAR = true;
-          } else {
-            console.log("Кнопка AR не найдена, используем API...");
-
-            if (modelViewer.activateAR) {
-              setTimeout(() => {
-                modelViewer.activateAR();
-                console.log("AR активирован через API activateAR()");
-                wasInAR = true;
-              }, 500);
-            } else {
-              console.log("Пытаемся найти кнопку позже...");
-
-              const retryInterval = setInterval(() => {
-                const retryButton =
-                  modelViewer.shadowRoot.querySelector(".ar-button");
-                if (retryButton) {
-                  console.log(
-                    "Кнопка AR найдена при повторной попытке, нажимаем..."
-                  );
-                  retryButton.click();
-                  clearInterval(retryInterval);
-                  wasInAR = true;
-
-                  setTimeout(() => {
-                    autoArNotification.classList.remove("show");
-                  }, 2000);
-
-                  autoArTriggered = true;
-                }
-              }, 200);
-
-              setTimeout(() => {
-                clearInterval(retryInterval);
-                if (!autoArTriggered) {
-                  console.log("Не удалось найти кнопку AR");
-                  autoArNotification.innerHTML = `
-                    <div>🎉 Финальный фильтр активирован!</div>
-                    <div style="font-size: 0.9em; opacity: 0.9;">Нажмите кнопку "Посмотреть в AR"</div>
-                  `;
-
-                  setTimeout(() => {
-                    autoArNotification.classList.remove("show");
-                  }, 4000);
-                }
-              }, 5000);
-            }
+              clearInterval(retryInterval);
+              if (!wasInAR) {
+                console.log("Не удалось автоматически запустить AR");
+                // Можем показать инструкцию или ничего не делать
+              }
+            }, 5000);
           }
-        }, 500); // Задержка перед запуском AR
+        }, 1500); // Задержка перед запуском AR
       }
 
       // Финальный эффект
@@ -1023,10 +1000,14 @@
 
               // Убираем индикаторы через некоторое время
               setTimeout(() => {
-                activateAutoAR();
                 loadingProgress.classList.remove("active");
                 snowflakes.classList.remove("active");
                 console.log("Эффекты скрыты, модель видна");
+
+                // Автоматически запускаем AR
+                if (!autoArTriggered) {
+                  activateAutoAR();
+                }
               }, 2000);
             }, 1000);
           }
@@ -1048,9 +1029,9 @@
         filterClickArea.classList.add("disabled");
       }
 
-      // Запуск AR
+      // Запуск AR вручную (если пользователь сам нажмет кнопку)
       async function startAR() {
-        console.log("Нажата кнопка AR");
+        console.log("Нажата кнопка AR вручную");
 
         try {
           // Пробуем активировать AR через API model-viewer
@@ -1175,6 +1156,7 @@
         if (event.detail.status === "session-started") {
           console.log("AR сессия началась");
           wasInAR = true;
+          autoArTriggered = true; // Устанавливаем флаг, что AR запущен
         }
 
         if (event.detail.status === "session-ended") {
@@ -1197,6 +1179,7 @@
         closeInstruction: closeInstruction,
         showTreeModal: showTreeModal,
         closeTreeModal: closeTreeModal,
+        activateAutoAR: activateAutoAR,
         simulateClicks: () => {
           closeInstruction(); // Сначала закрываем инструкцию
           setTimeout(() => {
@@ -1210,6 +1193,7 @@
           isMelting,
           instructionShown,
           treeShownAfterAR,
+          autoArTriggered,
           ice4Active: filter3.classList.contains("active"),
           ice4Visible: window.getComputedStyle(filter3).opacity,
           modelVisible: modelViewer.classList.contains("visible"),
@@ -1219,7 +1203,7 @@
 
       console.log("Тестовые функции доступны в window.debug");
       console.log("debug.simulateClicks() - быстрое тестирование");
-      console.log("debug.startAR() - запуск AR");
+      console.log("debug.activateAutoAR() - принудительный запуск AR");
       console.log("debug.closeInstruction() - закрыть инструкцию");
     </script>
   </body>
