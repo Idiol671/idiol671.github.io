@@ -446,7 +446,6 @@
       const arExitModal = document.getElementById("arExitModal");
       const closeModalBtn = document.getElementById("closeModalBtn");
       const moreBtn = document.getElementById("moreBtn");
-      const arButton = document.getElementById("arButton");
 
       // Массивы и переменные
       const filters = [filter1, filter2, filter3];
@@ -638,12 +637,6 @@
           modelViewer.classList.add("visible");
         }, 100);
 
-        // Показываем кнопку AR
-        setTimeout(() => {
-          arButton.classList.add("visible");
-          console.log("Кнопка AR видна и кликабельна");
-        }, 800);
-
         // Отключаем клики по области фильтров
         filterClickArea.classList.add("disabled");
       }
@@ -718,7 +711,6 @@
 
       // Обработчики событий
       filterClickArea.addEventListener("click", changeFilter);
-      arButton.addEventListener("click", startAR);
       closeModalBtn.addEventListener("click", hideModal);
       moreBtn.addEventListener("click", hideModal);
 
@@ -758,7 +750,6 @@
           console.log("AR сессия началась");
           wasInAR = true;
           // Скрываем кнопку при входе в AR
-          arButton.classList.remove("visible");
         }
 
         if (event.detail.status === "session-ended") {
@@ -770,7 +761,6 @@
             }, 300);
           }
           // Показываем кнопку после выхода
-          arButton.classList.add("visible");
           wasInAR = false;
         }
       });
@@ -791,7 +781,6 @@
           ice4Active: filter3.classList.contains("active"),
           ice4Visible: window.getComputedStyle(filter3).opacity,
           modelVisible: modelViewer.classList.contains("visible"),
-          arButtonVisible: arButton.classList.contains("visible"),
           wasInAR,
         }),
       };
