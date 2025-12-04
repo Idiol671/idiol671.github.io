@@ -433,7 +433,6 @@
       let currentStream = null;
       let wasInAR = false;
       let filtersCompleted = false;
-      let arModalShownAfterExit = false; // Флаг для модального окна после AR
 
       // Инициализация камеры
       async function initCamera() {
@@ -526,14 +525,9 @@
         }
       }
 
-      // Смена фильтра
+      // Смена фильтра - ИСПРАВЛЕННАЯ ВЕРСИЯ
       function changeFilter() {
-        console.log(
-          "Клик! Текущий фильтр:",
-          currentFilterIndex,
-          "Завершено:",
-          filtersCompleted
-        );
+        console.log("Клик! Текущий фильтр:", currentFilterIndex);
 
         if (filtersCompleted) {
           console.log("Фильтры уже завершены, дальнейшие клики игнорируются");
@@ -545,8 +539,8 @@
           return;
         }
 
-        // ВАЖНО: Убираем active только если это НЕ последний фильтр
-        // Последний фильтр должен остаться активным
+        // Убираем активный класс только если это НЕ последний фильтр
+        // При переходе на ice-4 предыдущий фильтр скрывается, но ice-4 остается
         if (currentFilterIndex < filters.length - 1) {
           filters[currentFilterIndex].classList.remove("active");
         }
@@ -554,7 +548,6 @@
         // Переходим к следующему фильтру
         currentFilterIndex++;
 
-        // Активируем следующий фильтр
         if (currentFilterIndex < filters.length) {
           filters[currentFilterIndex].classList.add("active");
           console.log("Переключили на фильтр:", currentFilterIndex);
@@ -597,13 +590,8 @@
 
             // Запускаем эффект таяния
             setTimeout(() => {
-              console.log(
-                "Запускаем анимацию таяния для фильтра",
-                currentFilterIndex
-              );
-
-              // НЕ удаляем фильтр ice-4, только добавляем класс melting
-              // Фильтр остается видимым благодаря классу active
+              console.log("Запускаем анимацию таяния для ice-4");
+              // ice-4 получает класс melting, но active остается!
               filters[currentFilterIndex].classList.add("melting");
 
               // Показываем модель
@@ -613,8 +601,7 @@
               setTimeout(() => {
                 loadingProgress.classList.remove("active");
                 snowflakes.classList.remove("active");
-                console.log("Эффекты скрыты");
-                // НЕ показываем модальное окно здесь - только после выхода из AR
+                console.log("Эффекты скрыты, модель видна");
               }, 2000);
             }, 1000);
           }
@@ -638,7 +625,6 @@
         console.log("Показываем модальное окно после выхода из AR");
         arExitModal.style.display = "flex";
         arExitModal.classList.add("show");
-        arModalShownAfterExit = true;
       }
 
       // Скрыть модальное окно
@@ -646,44 +632,6 @@
         console.log("Скрываем модальное окно");
         arExitModal.style.display = "none";
         arExitModal.classList.remove("show");
-      }
-
-      // Сброс к начальному состоянию
-      function resetToInitialState() {
-        console.log("Сброс к начальному состоянию");
-
-        // Сбрасываем фильтры
-        filters.forEach((filter) => {
-          filter.classList.remove("active", "melting");
-        });
-        filters[0].classList.add("active");
-        currentFilterIndex = 0;
-
-        // Сбрасываем флаги
-        filtersCompleted = false;
-        arModalShownAfterExit = false;
-
-        // Скрываем снежинки
-        snowflakes.classList.remove("active");
-
-        // Скрываем индикатор загрузки
-        loadingProgress.classList.remove("active");
-        loadingProgressBar.style.width = "0%";
-
-        // Скрываем модель
-        modelViewer.classList.remove("visible", "interactive");
-
-        // Включаем клики по области фильтров
-        filterClickArea.classList.remove("disabled");
-
-        // Сбрасываем флаги
-        isMelting = false;
-        wasInAR = false;
-
-        // Скрываем модальное окно если открыто
-        hideModal();
-
-        console.log("Состояние полностью сброшено");
       }
 
       // Инициализация при загрузке страницы
@@ -704,9 +652,6 @@
         console.log(
           "Инициализация завершена. Кликайте по экрану для смены фильтров."
         );
-        console.log(
-          "Доступные тестовые функции в консоли: window.testFunctions"
-        );
       });
 
       // Обработчики событий
@@ -720,7 +665,6 @@
       moreBtn.addEventListener("click", () => {
         console.log("Кнопка 'Записать еще' нажата");
         hideModal();
-        resetToInitialState();
       });
 
       // Закрытие модального окна при клике на оверлей
@@ -731,66 +675,59 @@
         }
       });
 
-      // Сброс по двойному клику
-      cameraWrapper.addEventListener("dblclick", (e) => {
-        console.log("Двойной клик обнаружен");
-        resetToInitialState();
+      // ОТСЛЕЖИВАНИЕ ВЫХОДА ИЗ AR ЧЕРЕЗ VISIBILITY CHANGE
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          console.log("Страница стала видимой - возможно выход из AR");
+          if (wasInAR && filtersCompleted) {
+            console.log("Были в AR и фильтры завершены - показываем модалку");
+            // Небольшая задержка для надежности
+            setTimeout(() => {
+              showModal();
+            }, 300);
+            wasInAR = false;
+          }
+        }
+
+        if (document.visibilityState === "hidden") {
+          console.log("Страница скрыта - возможно вход в AR");
+        }
       });
 
-      // Отслеживание AR событий
+      // Отслеживание AR событий для установки флага wasInAR
       modelViewer.addEventListener("ar-status", (event) => {
         console.log("AR статус:", event.detail.status);
 
         if (event.detail.status === "session-started") {
           console.log("AR сессия началась");
           wasInAR = true;
-          hideModal(); // Скрываем модалку если открыта при входе в AR
         }
 
         if (event.detail.status === "session-ended") {
-          console.log("AR сессия завершилась");
+          console.log("AR сессия завершилась (через ar-status)");
           if (wasInAR && filtersCompleted) {
-            console.log("Показываем модальное окно после выхода из AR");
-            // Небольшая задержка перед показом модального окна
+            console.log("Показываем модальное окно через ar-status событие");
             setTimeout(() => {
-              if (!arModalShownAfterExit) {
-                showModal();
-              }
+              showModal();
             }, 300);
+            wasInAR = false;
           }
-          wasInAR = false;
         }
       });
 
-      // Для тестирования в консоли
-      window.testFunctions = {
-        changeFilter,
-        resetToInitialState,
-        unlockModel,
-        showModal,
-        hideModal,
-        getCurrentState: () => ({
+      // Для тестирования
+      window.debug = {
+        showModal: showModal,
+        hideModal: hideModal,
+        getState: () => ({
           currentFilterIndex,
           filtersCompleted,
           isMelting,
-          currentFilter: filters[currentFilterIndex]?.id || "none",
-          filterActive:
-            filters[currentFilterIndex]?.classList.contains("active"),
-          cameraActive: !!currentStream,
+          ice4Active: filter3.classList.contains("active"),
+          ice4Melting: filter3.classList.contains("melting"),
           wasInAR,
-          arModalShownAfterExit,
         }),
-        simulateClicks: (count) => {
-          for (let i = 0; i < count; i++) {
-            setTimeout(() => changeFilter(), i * 500);
-          }
-        },
       };
-
-      console.log("Тестовые функции доступны в window.testFunctions");
-      console.log(
-        "Используйте testFunctions.simulateClicks(3) для быстрого тестирования"
-      );
     </script>
   </body>
 </html>
