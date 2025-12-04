@@ -27,6 +27,7 @@
             id="model"
             alt="3D Model"
             src="./assets/model/Horse_animation.gltf"
+            ios-src="./assets/ios/hors_anim.usdz"
             camera-controls
             ar
             ar-modes="webxr scene-viewer quick-look"
@@ -63,7 +64,7 @@
               ссылке или отправить напрямую
             </p>
             <button class="modal-button" id="closeModalBtn">Продолжить</button>
-            <button class="modal-button modal-button--more">
+            <button class="modal-button modal-button--more" id="moreBtn">
               Записать еще
             </button>
           </div>
@@ -88,7 +89,7 @@
       .fill {
         position: relative;
         width: 100%;
-        height: 100dvh;
+        height: 100vh;
         display: flex;
         flex-direction: column;
         background: url("assets/background.png");
@@ -132,7 +133,6 @@
         height: 100%;
         object-fit: cover;
         z-index: 0;
-        filter: saturate(1.1) contrast(1.05);
       }
 
       /* Стили для эффекта таяния льда */
@@ -361,21 +361,28 @@
         z-index: 100;
       }
 
+      .modal-overlay.show {
+        display: flex;
+      }
+
       .modal-content {
         background: white;
         padding: 30px;
         border-radius: 20px;
         max-width: 400px;
         text-align: center;
+        margin: 20px;
       }
 
       .modal-title {
         margin-bottom: 15px;
+        color: #333;
       }
 
       .modal-message {
         margin-bottom: 20px;
         color: #666;
+        line-height: 1.5;
       }
 
       .modal-button {
@@ -387,10 +394,19 @@
         margin: 5px;
         cursor: pointer;
         font-size: 16px;
+        transition: background 0.3s ease;
+      }
+
+      .modal-button:hover {
+        background: #29b6f6;
       }
 
       .modal-button--more {
         background: #81c784;
+      }
+
+      .modal-button--more:hover {
+        background: #66bb6a;
       }
     </style>
 
@@ -408,6 +424,7 @@
       const loadingProgressBar = document.getElementById("loadingProgressBar");
       const arExitModal = document.getElementById("arExitModal");
       const closeModalBtn = document.getElementById("closeModalBtn");
+      const moreBtn = document.getElementById("moreBtn");
 
       // Массивы и переменные
       const filters = [filter1, filter2, filter3];
@@ -415,42 +432,79 @@
       let isMelting = false;
       let currentStream = null;
       let wasInAR = false;
-      let filtersCompleted = false; // Новый флаг для отслеживания завершения фильтров
+      let filtersCompleted = false;
 
-      // Инициализация камеры
+      // Инициализация камеры - УПРОЩЕННАЯ ВЕРСИЯ
       async function initCamera() {
         try {
+          console.log("Запуск инициализации камеры...");
+
           // Останавливаем предыдущий поток
           if (currentStream) {
             currentStream.getTracks().forEach((track) => track.stop());
           }
 
-          // Пробуем получить камеру
+          // Пробуем простую версию без exact
           const constraints = {
             video: {
-              facingMode: {exact: "environment"},
+              facingMode: "environment", // Убрали {exact: "environment"}
+              width: {ideal: 1280},
+              height: {ideal: 720},
             },
             audio: false,
           };
 
+          console.log("Пытаемся получить доступ к камере...");
+
           let stream;
           try {
             stream = await navigator.mediaDevices.getUserMedia(constraints);
+            console.log("Камера получена с facingMode: environment");
           } catch (err) {
-            // Если не удалось получить заднюю камеру, пробуем любую
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: true,
-              audio: false,
-            });
+            console.log(
+              "Не удалось получить заднюю камеру, пробуем user (фронтальную)..."
+            );
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: {facingMode: "user"},
+                audio: false,
+              });
+              console.log("Камера получена с facingMode: user (фронтальная)");
+            } catch (err2) {
+              console.log("Пробуем любую камеру...");
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false,
+              });
+              console.log("Камера получена (любая доступная)");
+            }
           }
 
           currentStream = stream;
           video.srcObject = stream;
 
-          console.log("Камера инициализирована");
+          // Добавляем обработчик для отладки
+          video.onloadedmetadata = () => {
+            console.log(
+              "Видео загружено, размеры:",
+              video.videoWidth,
+              "x",
+              video.videoHeight
+            );
+          };
+
+          video.onerror = (e) => {
+            console.error("Ошибка видео:", e);
+          };
+
+          console.log("Камера успешно инициализирована");
           return true;
         } catch (err) {
-          console.error("Ошибка при инициализации камеры:", err);
+          console.error("Критическая ошибка при инициализации камеры:", err);
+          // Показываем сообщение для пользователя
+          alert(
+            "Для работы приложения необходим доступ к камере. Пожалуйста, разрешите доступ к камере и обновите страницу."
+          );
           return false;
         }
       }
@@ -479,6 +533,13 @@
 
       // Смена фильтра
       function changeFilter() {
+        console.log(
+          "Клик! Текущий фильтр:",
+          currentFilterIndex,
+          "Завершено:",
+          filtersCompleted
+        );
+
         // Если фильтры уже завершены, не делаем ничего
         if (filtersCompleted) {
           console.log("Фильтры уже завершены, дальнейшие клики игнорируются");
@@ -489,8 +550,6 @@
           console.log("Эффект таяния уже активен");
           return;
         }
-
-        console.log("Текущий фильтр:", currentFilterIndex);
 
         // Убираем активный класс с текущего фильтра
         filters[currentFilterIndex].classList.remove("active");
@@ -509,12 +568,14 @@
               "Достигнут последний фильтр (ice-4), активируем финальный эффект"
             );
             filtersCompleted = true; // Устанавливаем флаг завершения
+            // НЕ удаляем активный класс с последнего фильтра
             startFinalEffect();
           }
         } else {
-          // Если дошли до конца, возвращаемся к первому (не должно происходить, так как есть флаг filtersCompleted)
-          currentFilterIndex = 0;
+          // Если дошли до конца (не должно происходить с флагом filtersCompleted)
+          currentFilterIndex = filters.length - 1; // Остаемся на последнем фильтре
           filters[currentFilterIndex].classList.add("active");
+          filtersCompleted = true;
         }
       }
 
@@ -536,26 +597,30 @@
           if (progress > 100) progress = 100;
           loadingProgressBar.style.width = `${progress}%`;
 
-          console.log("Прогресс:", progress);
+          console.log("Прогресс загрузки:", progress + "%");
 
           if (progress >= 100) {
             clearInterval(progressInterval);
 
-            console.log("Прогресс завершен");
+            console.log("Прогресс завершен на 100%");
 
             // Запускаем эффект таяния
             setTimeout(() => {
-              console.log("Запускаем анимацию таяния");
+              console.log(
+                "Запускаем анимацию таяния для фильтра",
+                currentFilterIndex
+              );
               filters[currentFilterIndex].classList.add("melting");
 
               // Показываем модель
               unlockModel();
 
-              // Убираем индикаторы через некоторое время
+              // Убираем индикаторы через некоторое время и показываем модальное окно
               setTimeout(() => {
                 loadingProgress.classList.remove("active");
                 snowflakes.classList.remove("active");
-                console.log("Эффекты скрыты");
+                console.log("Эффекты скрыты, показываем модальное окно");
+                showModal(); // ПОКАЗЫВАЕМ МОДАЛЬНОЕ ОКНО ЗДЕСЬ!
               }, 2000);
             }, 1000);
           }
@@ -578,12 +643,14 @@
       function showModal() {
         console.log("Показываем модальное окно");
         arExitModal.style.display = "flex";
+        arExitModal.classList.add("show");
       }
 
       // Скрыть модальное окно
       function hideModal() {
         console.log("Скрываем модальное окно");
         arExitModal.style.display = "none";
+        arExitModal.classList.remove("show");
       }
 
       // Сброс к начальному состоянию
@@ -617,41 +684,62 @@
         isMelting = false;
         wasInAR = false;
 
-        console.log("Состояние сброшено");
+        // Скрываем модальное окно если открыто
+        hideModal();
+
+        console.log("Состояние полностью сброшено");
       }
 
       // Инициализация при загрузке страницы
       window.addEventListener("load", async () => {
-        console.log("Страница загружена");
+        console.log("Страница загружена, начинаем инициализацию...");
 
         // Инициализируем камеру
         const cameraSuccess = await initCamera();
         if (!cameraSuccess) {
-          alert(
-            "Не удалось получить доступ к камере. Пожалуйста, проверьте разрешения."
-          );
+          console.error("Не удалось инициализировать камеру");
+        } else {
+          console.log("Камера успешно инициализирована");
         }
 
         // Создаем снежинки
         createSnowflakes();
 
-        console.log("Инициализация завершена");
+        console.log(
+          "Инициализация завершена. Кликайте по экрану для смены фильтров."
+        );
+        console.log(
+          "Доступные тестовые функции в консоли: window.testFunctions"
+        );
       });
 
       // Обработчики событий
       filterClickArea.addEventListener("click", changeFilter);
 
-      closeModalBtn.addEventListener("click", hideModal);
+      closeModalBtn.addEventListener("click", () => {
+        console.log("Кнопка 'Продолжить' нажата");
+        hideModal();
+      });
+
+      moreBtn.addEventListener("click", () => {
+        console.log("Кнопка 'Записать еще' нажата");
+        hideModal();
+        resetToInitialState();
+      });
 
       // Закрытие модального окна при клике на оверлей
       arExitModal.addEventListener("click", (e) => {
         if (e.target === arExitModal) {
+          console.log("Клик по оверлею модального окна");
           hideModal();
         }
       });
 
       // Сброс по двойному клику
-      cameraWrapper.addEventListener("dblclick", resetToInitialState);
+      cameraWrapper.addEventListener("dblclick", (e) => {
+        console.log("Двойной клик обнаружен");
+        resetToInitialState();
+      });
 
       // Отслеживание AR событий
       modelViewer.addEventListener("ar-status", (event) => {
@@ -660,12 +748,16 @@
         if (event.detail.status === "session-started") {
           console.log("AR сессия началась");
           wasInAR = true;
+          hideModal(); // Скрываем модалку если открыта при входе в AR
         }
 
         if (event.detail.status === "session-ended") {
           console.log("AR сессия завершилась");
           if (wasInAR) {
-            showModal();
+            console.log("Показываем модальное окно после AR сессии");
+            setTimeout(() => {
+              showModal();
+            }, 500);
             wasInAR = false;
           }
         }
@@ -682,11 +774,20 @@
           currentFilterIndex,
           filtersCompleted,
           isMelting,
-          currentFilter: filters[currentFilterIndex].id,
+          currentFilter: filters[currentFilterIndex]?.id || "none",
+          cameraActive: !!currentStream,
         }),
+        simulateClicks: (count) => {
+          for (let i = 0; i < count; i++) {
+            setTimeout(() => changeFilter(), i * 500);
+          }
+        },
       };
 
       console.log("Тестовые функции доступны в window.testFunctions");
+      console.log(
+        "Используйте testFunctions.simulateClicks(3) для быстрого тестирования"
+      );
     </script>
   </body>
 </html>
