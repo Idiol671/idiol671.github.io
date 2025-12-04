@@ -16,11 +16,11 @@
           <img src="assets/logo.svg" alt="Логотип" class="back__logo" />
           <p class="copyright">
             ©️ Все права принадлежат "MOS.RU" при Аппарате Мэра и Правительства
-            Москвы 2023 год
+            Москвы 2025 год
           </p>
         </div>
 
-        <div class="scene" id="camera-wrapper">
+        <div class="scene" id="camera-wrapper" style="display: none">
           <video id="cam" autoplay playsinline muted></video>
 
           <!-- Убираем camera-controls чтобы управлять через свои обработчики -->
@@ -55,6 +55,136 @@
           <!-- Индикатор загрузки -->
           <div class="loading-progress" id="loadingProgress">
             <div class="loading-progress-bar" id="loadingProgressBar"></div>
+          </div>
+        </div>
+
+        <!-- МОДАЛКА ИНСТРУКЦИИ - ПОКАЗЫВАЕТСЯ ПРИ ЗАГРУЗКЕ -->
+        <div class="instruction" id="instructionModal">
+          <div class="instruction-fill">
+            <div class="instruction-content">
+              <p class="instruction__title">Инструкция по управлению</p>
+              <div class="instruction-list">
+                <div class="instruction-element">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M21.375 14.625V18C21.375 19.2984 21.2222 20.4862 20.9456 21.345C20.9022 21.4879 20.8308 21.6207 20.7356 21.7357C20.6403 21.8507 20.5231 21.9456 20.3908 22.0149C20.2585 22.0841 20.1137 22.1263 19.9649 22.139C19.8161 22.1517 19.6663 22.1347 19.5241 22.0889C19.382 22.0431 19.2504 21.9694 19.137 21.8722C19.0236 21.7751 18.9307 21.6563 18.8637 21.5228C18.7967 21.3893 18.757 21.2439 18.7468 21.0949C18.7366 20.9459 18.7562 20.7963 18.8044 20.655C19.005 20.0316 19.125 19.0387 19.125 18V14.625C19.125 14.4261 19.046 14.2353 18.9053 14.0947C18.7647 13.954 18.5739 13.875 18.375 13.875C18.1761 13.875 17.9853 13.954 17.8447 14.0947C17.704 14.2353 17.625 14.4261 17.625 14.625V15C17.625 15.2984 17.5065 15.5845 17.2955 15.7955C17.0845 16.0065 16.7984 16.125 16.5 16.125C16.2016 16.125 15.9155 16.0065 15.7045 15.7955C15.4935 15.5845 15.375 15.2984 15.375 15V13.125C15.375 12.9261 15.296 12.7353 15.1553 12.5947C15.0147 12.454 14.8239 12.375 14.625 12.375C14.4261 12.375 14.2353 12.454 14.0947 12.5947C13.954 12.7353 13.875 12.9261 13.875 13.125V14.25C13.875 14.5484 13.7565 14.8345 13.5455 15.0455C13.3345 15.2565 13.0484 15.375 12.75 15.375C12.4516 15.375 12.1655 15.2565 11.9545 15.0455C11.7435 14.8345 11.625 14.5484 11.625 14.25V7.875C11.625 7.67609 11.546 7.48532 11.4053 7.34467C11.2647 7.20402 11.0739 7.125 10.875 7.125C10.6761 7.125 10.4853 7.20402 10.3447 7.34467C10.204 7.48532 10.125 7.67609 10.125 7.875V18C10.1247 18.2442 10.045 18.4817 9.89781 18.6767C9.75064 18.8716 9.54403 19.0133 9.3092 19.0804C9.07437 19.1475 8.82408 19.1364 8.59613 19.0487C8.36817 18.9611 8.17495 18.8016 8.04564 18.5944L6.29439 15.7819L6.2747 15.75C6.17624 15.5768 6.01301 15.4499 5.82093 15.397C5.62886 15.3442 5.42366 15.3698 5.25048 15.4683C5.0773 15.5667 4.95033 15.73 4.8975 15.922C4.84466 16.1141 4.8703 16.3193 4.96876 16.4925L7.33782 20.4188C7.49186 20.6744 7.53804 20.9807 7.46622 21.2703C7.3944 21.56 7.21046 21.8092 6.95485 21.9633C6.69925 22.1173 6.39293 22.1635 6.10327 22.0917C5.81362 22.0199 5.56436 21.8359 5.41032 21.5803L3.03751 17.6428L3.02626 17.6241C2.65401 16.9796 2.53457 16.2199 2.69115 15.4923C2.84772 14.7648 3.26913 14.1214 3.87352 13.6871C4.47791 13.2529 5.22212 13.0588 5.9616 13.1425C6.70109 13.2263 7.38305 13.5819 7.87501 14.1403V7.875C7.87501 7.07935 8.19108 6.31629 8.75369 5.75368C9.3163 5.19107 10.0794 4.875 10.875 4.875C11.6707 4.875 12.4337 5.19107 12.9963 5.75368C13.5589 6.31629 13.875 7.07935 13.875 7.875V10.2188C14.5454 10.0457 15.255 10.1099 15.8835 10.4004C16.5119 10.6908 17.0206 11.1898 17.3231 11.8125C17.7772 11.6425 18.2657 11.5851 18.7468 11.6452C19.228 11.7053 19.6874 11.8811 20.0857 12.1576C20.484 12.434 20.8093 12.8029 21.0339 13.2327C21.2584 13.6624 21.3755 14.1401 21.375 14.625ZM5.25001 9C5.54838 9 5.83453 8.88147 6.04551 8.6705C6.25648 8.45952 6.37501 8.17337 6.37501 7.875C6.37501 6.68153 6.84912 5.53693 7.69303 4.69302C8.53694 3.84911 9.68154 3.375 10.875 3.375C12.0685 3.375 13.2131 3.84911 14.057 4.69302C14.9009 5.53693 15.375 6.68153 15.375 7.875C15.375 8.17337 15.4935 8.45952 15.7045 8.6705C15.9155 8.88147 16.2016 9 16.5 9C16.7984 9 17.0845 8.88147 17.2955 8.6705C17.5065 8.45952 17.625 8.17337 17.625 7.875C17.625 6.08479 16.9139 4.3679 15.648 3.10203C14.3821 1.83616 12.6652 1.125 10.875 1.125C9.0848 1.125 7.36791 1.83616 6.10204 3.10203C4.83617 4.3679 4.12501 6.08479 4.12501 7.875C4.12501 8.17337 4.24354 8.45952 4.45452 8.6705C4.66549 8.88147 4.95164 9 5.25001 9Z"
+                      fill="white" />
+                  </svg>
+                  <p class="instruction__text">
+                    Тапайте по экрану чтобы расколоть лёд
+                  </p>
+                </div>
+                <div class="instruction-element">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M7.53876 10.7175L6.62126 7.68501H6.55626L5.63751 10.7175H7.53876ZM12.0913 7.41626V9.83876H13.3825C14.2075 9.83876 14.7175 9.44376 14.7175 8.65126C14.7175 7.85126 14.19 7.41626 13.405 7.41626H12.0913Z"
+                      fill="white" />
+                    <path
+                      d="M0 5C0 4.33696 0.263392 3.70107 0.732233 3.23223C1.20107 2.76339 1.83696 2.5 2.5 2.5H17.5C18.163 2.5 18.7989 2.76339 19.2678 3.23223C19.7366 3.70107 20 4.33696 20 5V15C20 15.663 19.7366 16.2989 19.2678 16.7678C18.7989 17.2366 18.163 17.5 17.5 17.5H2.5C1.83696 17.5 1.20107 17.2366 0.732233 16.7678C0.263392 16.2989 0 15.663 0 15V5ZM5.33125 11.8225H7.83625L8.42375 13.75H10L7.495 6.25125H5.75875L3.24375 13.75H4.74375L5.33125 11.8225ZM10.625 6.25V13.75H12.0913V10.9537H13.4213L14.7337 13.75H16.3925L14.8875 10.7288C15.5687 10.4663 16.25 9.72375 16.25 8.625C16.25 7.19125 15.2838 6.25 13.6188 6.25H10.625Z"
+                      fill="white" />
+                  </svg>
+                  <p class="instruction__text">
+                    Предоставьте доступ к AR режиму
+                  </p>
+                </div>
+                <div class="instruction-element">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M12.5 9C12.3167 9 12.175 8.91667 12.075 8.75C11.975 8.58333 11.975 8.41667 12.075 8.25L15 3.175C15.1333 2.95833 15.3 2.82933 15.5 2.788C15.7 2.74667 15.9167 2.784 16.15 2.9C17.3 3.41667 18.3167 4.13733 19.2 5.062C20.0833 5.98667 20.7667 7.03267 21.25 8.2C21.3333 8.41667 21.3207 8.60433 21.212 8.763C21.1033 8.92167 20.9327 9.00067 20.7 9H12.5ZM8.925 10.225L5.925 5.025C5.79167 4.80833 5.75833 4.59167 5.825 4.375C5.89167 4.15833 6.025 3.98333 6.225 3.85C7.025 3.28333 7.91267 2.83333 8.888 2.5C9.86333 2.16667 10.9007 2 12 2C12.25 2 12.525 2.01267 12.825 2.038C13.125 2.06333 13.375 2.09233 13.575 2.125C13.8083 2.15833 13.9627 2.25833 14.038 2.425C14.1133 2.59167 14.0923 2.775 13.975 2.975L9.8 10.225C9.7 10.3917 9.55433 10.475 9.363 10.475C9.17167 10.475 9.02567 10.3917 8.925 10.225ZM2.85 14C2.66667 14 2.5 13.9377 2.35 13.813C2.2 13.6883 2.10833 13.534 2.075 13.35C2.04167 13.166 2.021 12.966 2.013 12.75C2.005 12.534 2.00067 12.284 2 12C2 10.95 2.171 9.90433 2.513 8.863C2.855 7.82167 3.384 6.834 4.1 5.9C4.28333 5.66667 4.496 5.55 4.738 5.55C4.98 5.55 5.16733 5.675 5.3 5.925L9.5 13.25C9.6 13.4167 9.596 13.5833 9.488 13.75C9.38 13.9167 9.234 14 9.05 14H2.85ZM7.85 21.1C6.75 20.5667 5.74167 19.8417 4.825 18.925C3.90833 18.0083 3.21667 16.9667 2.75 15.8C2.66667 15.5833 2.68333 15.396 2.8 15.238C2.91667 15.08 3.09167 15.0007 3.325 15H11.475C11.6583 15 11.8 15.0833 11.9 15.25C12 15.4167 12 15.5833 11.9 15.75L9.025 20.775C8.89167 20.9917 8.725 21.1333 8.525 21.2C8.325 21.2667 8.1 21.2333 7.85 21.1ZM12 22C11.7667 22 11.504 21.9873 11.212 21.962C10.92 21.9367 10.666 21.9077 10.45 21.875C10.2167 21.8417 10.0583 21.7417 9.975 21.575C9.89167 21.4083 9.90833 21.225 10.025 21.025L14.15 13.825C14.25 13.6583 14.4167 13.575 14.65 13.575C14.8833 13.575 15.05 13.6583 15.15 13.825L18.1 18.95C18.2167 19.1333 18.2543 19.3333 18.213 19.55C18.1717 19.7667 18.034 19.9667 17.8 20.15C17.0333 20.7167 16.1377 21.1667 15.113 21.5C14.0883 21.8333 13.0507 22 12 22ZM18.775 18.125L14.525 10.75C14.425 10.5833 14.4293 10.4167 14.538 10.25C14.6467 10.0833 14.7923 10 14.975 10H21.15C21.3333 10 21.5 10.0627 21.65 10.188C21.8 10.3133 21.8917 10.4673 21.925 10.65C21.9583 10.8327 21.979 11.0327 21.987 11.25C21.995 11.4673 21.9993 11.7173 22 12C22 13.05 21.829 14.1043 21.487 15.163C21.145 16.2217 20.616 17.209 19.9 18.125C19.7667 18.3083 19.575 18.4043 19.325 18.413C19.075 18.4217 18.8917 18.3257 18.775 18.125Z"
+                      fill="white" />
+                  </svg>
+                  <p class="instruction__text">
+                    Наведите камеру на поверхность, что бы появилась 3D сцена
+                  </p>
+                </div>
+                <div class="instruction-element">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M12 9C10.374 9 9 10.374 9 12C9 13.626 10.374 15 12 15C13.626 15 15 13.626 15 12C15 10.374 13.626 9 12 9Z"
+                      fill="white" />
+                    <path
+                      d="M20 5H17.414L14.707 2.293C14.5195 2.10545 14.2652 2.00006 14 2H10C9.73481 2.00006 9.48049 2.10545 9.293 2.293L6.586 5H4C2.897 5 2 5.897 2 7V18C2 19.103 2.897 20 4 20H20C21.103 20 22 19.103 22 18V7C22 5.897 21.103 5 20 5ZM12 17C9.29 17 7 14.71 7 12C7 9.29 9.29 7 12 7C14.71 7 17 9.29 17 12C17 14.71 14.71 17 12 17Z"
+                      fill="white" />
+                  </svg>
+                  <p class="instruction__text">Сделайте фото и поделитесь им</p>
+                </div>
+                <div class="instruction-element">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_6853_5474)">
+                      <path
+                        d="M2.92999 17.07C1.97489 16.1475 1.21306 15.044 0.688974 13.824C0.164884 12.604 -0.110979 11.2918 -0.122517 9.96397C-0.134055 8.63618 0.118962 7.31938 0.621771 6.09042C1.12458 4.86145 1.86711 3.74493 2.80604 2.80601C3.74496 1.86708 4.86148 1.12455 6.09045 0.62174C7.31941 0.118932 8.63621 -0.134085 9.964 -0.122547C11.2918 -0.111009 12.604 0.164853 13.824 0.688943C15.0441 1.21303 16.1475 1.97486 17.07 2.92996C18.8916 4.81598 19.8995 7.342 19.8767 9.96397C19.8539 12.5859 18.8023 15.0941 16.9482 16.9481C15.0941 18.8022 12.586 19.8539 9.964 19.8767C7.34203 19.8995 4.81601 18.8915 2.92999 17.07ZM11.4 9.99996L14.23 7.16996L12.82 5.75996L9.99999 8.58996L7.16999 5.75996L5.75999 7.16996L8.58999 9.99996L5.75999 12.83L7.16999 14.24L9.99999 11.41L12.83 14.24L14.24 12.83L11.41 9.99996H11.4Z"
+                        fill="white" />
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_6853_5474">
+                        <rect width="20" height="20" fill="white" />
+                      </clipPath>
+                    </defs>
+                  </svg>
+                  <p class="instruction__text">
+                    Нажмите на кнопку закрыть и вернитесь в приложение, что бы
+                    продолжить
+                  </p>
+                </div>
+              </div>
+              <button class="instruction__close" id="instructionCloseBtn">
+                ЗАКРЫТЬ
+              </button>
+            </div>
+            <div class="instruction-content">
+              <p class="instruction__title">Инструкция по записи</p>
+              <img
+                src="assets/instruction.png"
+                alt=""
+                class="instruction__img" />
+              <p class="instruction__subtitle">
+                <span>Зажмите</span> кнопку <br />
+                для записи видео
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- МОДАЛКА TREE - ПОКАЗЫВАЕТСЯ ПОСЛЕ ВЫХОДА ИЗ AR -->
+        <div class="tree" id="treeModal" style="display: none">
+          <div class="tree-content">
+            <img src="assets/logo.svg" alt="" class="tree__logo" />
+            <p class="tree__title">
+              Зажгите новогоднюю ёлку и запустите праздник в МетаВДНХ!
+            </p>
+            <img src="assets/tree.png" alt="" class="tree__img" />
+            <p class="tree__text">
+              Праздник уже вот-вот наступит, а елка еще не готова. Пройдите
+              через разные эпохи, познакомьтесь с традициями Петра I и украсьте
+              новогоднюю елку. Создайте уникальную видеооткрытку и поздравьте
+              близких с наступающим 2026 годом!
+            </p>
+            <button class="tree__close" id="treeCloseBtn">Перейти</button>
           </div>
         </div>
 
@@ -368,7 +498,7 @@
         cursor: default;
       }
 
-      /* Модальное окно */
+      /* Модальные окна */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -429,6 +559,152 @@
       .modal-button--more:hover {
         background: #66bb6a;
       }
+
+      /* Instruction modal - ПОКАЗЫВАЕТСЯ ПРИ ЗАГРУЗКЕ */
+      .instruction {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        overflow: auto;
+        padding: 40px;
+      }
+      .instruction-fill {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 100%;
+        margin: auto;
+      }
+      .instruction-content {
+        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 24px 16px;
+      }
+      .instruction__title {
+        margin: 0;
+        font-weight: 700;
+        font-size: 20px;
+        text-align: center;
+        color: #fff;
+      }
+      .instruction-list {
+        margin-top: 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .instruction-element {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+      }
+      .instruction-element svg {
+        width: 20px;
+        display: flex;
+        flex-shrink: 0;
+      }
+      .instruction__text {
+        font-size: 15px;
+        color: #fff;
+        margin: 0;
+      }
+      .instruction__close {
+        margin-top: 24px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        height: 47px;
+        font-weight: 600;
+        font-size: 16px;
+        color: #000;
+        border: none;
+        width: 100%;
+        cursor: pointer;
+      }
+      .instruction__img {
+        border-radius: 16px;
+        width: 100%;
+        margin-top: 27px;
+      }
+      .instruction__subtitle {
+        margin-top: 16px;
+        font-size: 20px;
+        text-align: center;
+        color: #fff;
+        margin-bottom: 0;
+      }
+      .instruction__subtitle span {
+        font-weight: 700;
+      }
+
+      /* Tree modal - ПОКАЗЫВАЕТСЯ ПОСЛЕ ВЫХОДА ИЗ AR */
+      .tree {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        overflow: auto;
+      }
+      .tree.show {
+        display: flex;
+      }
+      .tree-content {
+        background: #00288c;
+        padding: 30px 24px;
+        border-radius: 16px;
+        margin: 20px;
+        max-width: 400px;
+        margin: auto;
+      }
+      .tree__logo {
+        max-width: 143px;
+      }
+      .tree__title {
+        margin-top: 16px;
+        font-weight: 700;
+        font-size: 24px;
+        color: #fff;
+      }
+      .tree__img {
+        margin: 9px auto 0 auto;
+        max-width: 231px;
+        width: 100%;
+      }
+      .tree__text {
+        margin-top: 9px;
+        font-size: 16px;
+        color: #fff;
+      }
+      .tree__close {
+        margin-top: 16px;
+        height: 47px;
+        background: #f00;
+        border-radius: 8px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        font-size: 16px;
+        text-align: center;
+        color: #fff;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+      }
     </style>
 
     <script>
@@ -446,6 +722,12 @@
       const arExitModal = document.getElementById("arExitModal");
       const closeModalBtn = document.getElementById("closeModalBtn");
       const moreBtn = document.getElementById("moreBtn");
+      const instructionModal = document.getElementById("instructionModal");
+      const instructionCloseBtn = document.getElementById(
+        "instructionCloseBtn"
+      );
+      const treeModal = document.getElementById("treeModal");
+      const treeCloseBtn = document.getElementById("treeCloseBtn");
 
       // Массивы и переменные
       const filters = [filter1, filter2, filter3];
@@ -454,6 +736,8 @@
       let currentStream = null;
       let wasInAR = false;
       let filtersCompleted = false;
+      let instructionShown = false;
+      let treeShownAfterAR = false;
 
       // Инициализация камеры
       async function initCamera() {
@@ -543,8 +827,43 @@
         }
       }
 
+      // Закрыть инструкцию и активировать взаимодействие
+      function closeInstruction() {
+        console.log("Закрываем инструкцию");
+        instructionModal.style.display = "none";
+        instructionShown = true;
+
+        // Показываем камеру и активируем фильтры
+        cameraWrapper.style.display = "block";
+
+        // Активируем клики по фильтрам
+        filterClickArea.style.pointerEvents = "auto";
+        console.log("Инструкция закрыта, можно взаимодействовать с фильтром");
+      }
+
+      // Показать tree модалку
+      function showTreeModal() {
+        console.log("Показываем tree модалку");
+        treeModal.style.display = "flex";
+        treeModal.classList.add("show");
+        treeShownAfterAR = true;
+      }
+
+      // Закрыть tree модалку
+      function closeTreeModal() {
+        console.log("Закрываем tree модалку");
+        treeModal.style.display = "none";
+        treeModal.classList.remove("show");
+      }
+
       // Смена фильтра
       function changeFilter() {
+        // Проверяем, была ли показана инструкция
+        if (!instructionShown) {
+          console.log("Инструкция еще не закрыта, фильтры не активны");
+          return;
+        }
+
         console.log("Клик! Текущий фильтр:", currentFilterIndex);
 
         if (filtersCompleted) {
@@ -635,6 +954,7 @@
         modelViewer.style.display = "flex";
         setTimeout(() => {
           modelViewer.classList.add("visible");
+          modelViewer.classList.add("interactive");
         }, 100);
 
         // Отключаем клики по области фильтров
@@ -698,18 +1018,22 @@
       window.addEventListener("load", async () => {
         console.log("Страница загружена, начинаем инициализацию...");
 
-        // Инициализируем камеру
+        // Показываем инструкцию сразу при загрузке
+        console.log("Показываем инструкцию");
+        instructionModal.style.display = "flex";
+
+        // Инициализируем камеру в фоне
         await initCamera();
 
         // Создаем снежинки
         createSnowflakes();
 
-        console.log(
-          "Инициализация завершена. Кликайте по экрану для смены фильтров."
-        );
+        console.log("Инициализация завершена. Ожидание закрытия инструкции...");
       });
 
       // Обработчики событий
+      instructionCloseBtn.addEventListener("click", closeInstruction);
+      treeCloseBtn.addEventListener("click", closeTreeModal);
       filterClickArea.addEventListener("click", changeFilter);
       closeModalBtn.addEventListener("click", hideModal);
       moreBtn.addEventListener("click", hideModal);
@@ -721,17 +1045,32 @@
         }
       });
 
+      treeModal.addEventListener("click", (e) => {
+        if (e.target === treeModal) {
+          closeTreeModal();
+        }
+      });
+
+      instructionModal.addEventListener("click", (e) => {
+        if (e.target === instructionModal) {
+          closeInstruction();
+        }
+      });
+
       // ОТСЛЕЖИВАНИЕ ВЫХОДА ИЗ AR
       document.addEventListener("visibilitychange", () => {
         console.log("Visibility change:", document.visibilityState);
 
         if (document.visibilityState === "visible") {
-          console.log("Страница стала видимой");
-          if (wasInAR && filtersCompleted) {
-            console.log("Были в AR и фильтры завершены - показываем модалку");
+          console.log("Страница стала видимой - возможно выход из AR");
+          if (wasInAR && filtersCompleted && !treeShownAfterAR) {
+            console.log(
+              "Были в AR и фильтры завершены - показываем tree модалку"
+            );
+            // Сначала показываем tree модалку
             setTimeout(() => {
-              showModal();
-            }, 500);
+              showTreeModal();
+            }, 300);
             wasInAR = false;
           }
         }
@@ -742,19 +1081,48 @@
         }
       });
 
+      // Отслеживание AR событий model-viewer
+      modelViewer.addEventListener("ar-status", (event) => {
+        console.log("AR статус:", event.detail.status);
+
+        if (event.detail.status === "session-started") {
+          console.log("AR сессия началась");
+          wasInAR = true;
+        }
+
+        if (event.detail.status === "session-ended") {
+          console.log("AR сессия завершилась");
+          if (wasInAR && filtersCompleted && !treeShownAfterAR) {
+            console.log("Показываем tree модалку через ar-status событие");
+            setTimeout(() => {
+              showTreeModal();
+            }, 300);
+          }
+          wasInAR = false;
+        }
+      });
+
       // Для тестирования
       window.debug = {
         startAR: startAR,
         unlockModel: unlockModel,
         showModal: showModal,
+        closeInstruction: closeInstruction,
+        showTreeModal: showTreeModal,
+        closeTreeModal: closeTreeModal,
         simulateClicks: () => {
-          changeFilter();
-          setTimeout(() => changeFilter(), 500);
+          closeInstruction(); // Сначала закрываем инструкцию
+          setTimeout(() => {
+            changeFilter();
+            setTimeout(() => changeFilter(), 500);
+          }, 100);
         },
         getState: () => ({
           currentFilterIndex,
           filtersCompleted,
           isMelting,
+          instructionShown,
+          treeShownAfterAR,
           ice4Active: filter3.classList.contains("active"),
           ice4Visible: window.getComputedStyle(filter3).opacity,
           modelVisible: modelViewer.classList.contains("visible"),
@@ -765,6 +1133,7 @@
       console.log("Тестовые функции доступны в window.debug");
       console.log("debug.simulateClicks() - быстрое тестирование");
       console.log("debug.startAR() - запуск AR");
+      console.log("debug.closeInstruction() - закрыть инструкцию");
     </script>
   </body>
 </html>
