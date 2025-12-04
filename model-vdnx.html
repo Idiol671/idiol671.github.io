@@ -632,7 +632,7 @@
         console.log("Показываем 3D модель");
 
         // Показываем model-viewer
-        modelViewer.style.display = "block";
+        modelViewer.style.display = "flex";
         setTimeout(() => {
           modelViewer.classList.add("visible");
         }, 100);
@@ -739,29 +739,6 @@
         if (document.visibilityState === "hidden") {
           console.log("Страница скрыта - возможно вход в AR");
           wasInAR = true;
-        }
-      });
-
-      // Отслеживание AR событий model-viewer
-      modelViewer.addEventListener("ar-status", (event) => {
-        console.log("AR статус:", event.detail.status);
-
-        if (event.detail.status === "session-started") {
-          console.log("AR сессия началась");
-          wasInAR = true;
-          // Скрываем кнопку при входе в AR
-        }
-
-        if (event.detail.status === "session-ended") {
-          console.log("AR сессия завершилась");
-          if (wasInAR && filtersCompleted) {
-            console.log("Показываем модальное окно");
-            setTimeout(() => {
-              showModal();
-            }, 300);
-          }
-          // Показываем кнопку после выхода
-          wasInAR = false;
         }
       });
 
