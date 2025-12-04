@@ -413,6 +413,7 @@
     <script>
       // Основные элементы
       const video = document.getElementById("cam");
+      const cameraWrapper = document.getElementById("camera-wrapper");
       const filter1 = document.getElementById("filter1");
       const filter2 = document.getElementById("filter2");
       const filter3 = document.getElementById("filter3");
@@ -432,31 +433,73 @@
       let currentStream = null;
       let wasInAR = false;
       let filtersCompleted = false;
-      let arModalShown = false;
+      let arModalShownAfterExit = false; // Флаг для модального окна после AR
 
-      // Инициализация камеры - СИЛЬНО УПРОЩЕННАЯ
+      // Инициализация камеры
       async function initCamera() {
         try {
-          console.log("Инициализация камеры...");
+          console.log("Запуск инициализации камеры...");
 
           if (currentStream) {
             currentStream.getTracks().forEach((track) => track.stop());
           }
 
-          // Самая простая версия
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
+          const constraints = {
+            video: {
+              facingMode: "environment",
+              width: {ideal: 1280},
+              height: {ideal: 720},
+            },
             audio: false,
-          });
+          };
+
+          console.log("Пытаемся получить доступ к камере...");
+
+          let stream;
+          try {
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            console.log("Камера получена с facingMode: environment");
+          } catch (err) {
+            console.log("Не удалось получить заднюю камеру, пробуем user...");
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: {facingMode: "user"},
+                audio: false,
+              });
+              console.log("Камера получена с facingMode: user");
+            } catch (err2) {
+              console.log("Пробуем любую камеру...");
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false,
+              });
+              console.log("Камера получена (любая доступная)");
+            }
+          }
 
           currentStream = stream;
           video.srcObject = stream;
 
-          console.log("Камера инициализирована успешно");
+          video.onloadedmetadata = () => {
+            console.log(
+              "Видео загружено, размеры:",
+              video.videoWidth,
+              "x",
+              video.videoHeight
+            );
+          };
+
+          video.onerror = (e) => {
+            console.error("Ошибка видео:", e);
+          };
+
+          console.log("Камера успешно инициализирована");
           return true;
         } catch (err) {
-          console.error("Ошибка камеры:", err);
-          // Не показываем алерт - просто логируем
+          console.error("Критическая ошибка при инициализации камеры:", err);
+          alert(
+            "Для работы приложения необходим доступ к камере. Пожалуйста, разрешите доступ к камере и обновите страницу."
+          );
           return false;
         }
       }
@@ -471,43 +514,57 @@
           const size = Math.random() * 4 + 2;
           const left = Math.random() * 100;
           const duration = Math.random() * 10 + 10;
+          const delay = Math.random() * 5;
 
           snowflake.style.width = `${size}px`;
           snowflake.style.height = `${size}px`;
           snowflake.style.left = `${left}%`;
           snowflake.style.animationDuration = `${duration}s`;
+          snowflake.style.animationDelay = `${delay}s`;
 
           snowflakes.appendChild(snowflake);
         }
       }
 
-      // Смена фильтра - УПРОЩЕННАЯ ВЕРСИЯ
+      // Смена фильтра
       function changeFilter() {
-        console.log("Клик! Текущий фильтр:", currentFilterIndex);
+        console.log(
+          "Клик! Текущий фильтр:",
+          currentFilterIndex,
+          "Завершено:",
+          filtersCompleted
+        );
 
-        // Если уже завершили или таем - выходим
-        if (filtersCompleted || isMelting) {
-          console.log("Клики больше не работают");
+        if (filtersCompleted) {
+          console.log("Фильтры уже завершены, дальнейшие клики игнорируются");
           return;
         }
 
-        // Убираем активный класс с текущего фильтра
-        filters[currentFilterIndex].classList.remove("active");
+        if (isMelting) {
+          console.log("Эффект таяния уже активен");
+          return;
+        }
+
+        // ВАЖНО: Убираем active только если это НЕ последний фильтр
+        // Последний фильтр должен остаться активным
+        if (currentFilterIndex < filters.length - 1) {
+          filters[currentFilterIndex].classList.remove("active");
+        }
 
         // Переходим к следующему фильтру
         currentFilterIndex++;
 
-        // Если есть следующий фильтр
+        // Активируем следующий фильтр
         if (currentFilterIndex < filters.length) {
-          // Активируем следующий фильтр
           filters[currentFilterIndex].classList.add("active");
-          console.log("Активирован фильтр:", currentFilterIndex);
+          console.log("Переключили на фильтр:", currentFilterIndex);
 
           // Если это последний фильтр (ice-4)
           if (currentFilterIndex === filters.length - 1) {
-            console.log("Достигнут последний фильтр (ice-4)");
+            console.log(
+              "Достигнут последний фильтр (ice-4), активируем финальный эффект"
+            );
             filtersCompleted = true;
-            // ЗАПУСКАЕМ ФИНАЛЬНЫЙ ЭФФЕКТ СРАЗУ
             startFinalEffect();
           }
         }
@@ -531,23 +588,33 @@
           if (progress > 100) progress = 100;
           loadingProgressBar.style.width = `${progress}%`;
 
+          console.log("Прогресс загрузки:", progress + "%");
+
           if (progress >= 100) {
             clearInterval(progressInterval);
 
+            console.log("Прогресс завершен на 100%");
+
             // Запускаем эффект таяния
             setTimeout(() => {
-              console.log("Запускаем таяние льда");
-              // Добавляем класс melting к ice-4 (он остается с классом active!)
+              console.log(
+                "Запускаем анимацию таяния для фильтра",
+                currentFilterIndex
+              );
+
+              // НЕ удаляем фильтр ice-4, только добавляем класс melting
+              // Фильтр остается видимым благодаря классу active
               filters[currentFilterIndex].classList.add("melting");
 
               // Показываем модель
               unlockModel();
 
-              // Убираем индикаторы
+              // Убираем индикаторы через некоторое время
               setTimeout(() => {
                 loadingProgress.classList.remove("active");
                 snowflakes.classList.remove("active");
-                console.log("Эффекты завершены, модель готова");
+                console.log("Эффекты скрыты");
+                // НЕ показываем модальное окно здесь - только после выхода из AR
               }, 2000);
             }, 1000);
           }
@@ -558,17 +625,20 @@
       function unlockModel() {
         console.log("Показываем 3D модель");
         modelViewer.classList.add("visible");
+        setTimeout(() => {
+          modelViewer.classList.add("interactive");
+        }, 500);
 
-        // Отключаем клики
+        // Отключаем клики по области фильтров
         filterClickArea.classList.add("disabled");
       }
 
       // Показать модальное окно
       function showModal() {
-        console.log("Показываем модальное окно");
+        console.log("Показываем модальное окно после выхода из AR");
         arExitModal.style.display = "flex";
         arExitModal.classList.add("show");
-        arModalShown = true;
+        arModalShownAfterExit = true;
       }
 
       // Скрыть модальное окно
@@ -578,17 +648,65 @@
         arExitModal.classList.remove("show");
       }
 
+      // Сброс к начальному состоянию
+      function resetToInitialState() {
+        console.log("Сброс к начальному состоянию");
+
+        // Сбрасываем фильтры
+        filters.forEach((filter) => {
+          filter.classList.remove("active", "melting");
+        });
+        filters[0].classList.add("active");
+        currentFilterIndex = 0;
+
+        // Сбрасываем флаги
+        filtersCompleted = false;
+        arModalShownAfterExit = false;
+
+        // Скрываем снежинки
+        snowflakes.classList.remove("active");
+
+        // Скрываем индикатор загрузки
+        loadingProgress.classList.remove("active");
+        loadingProgressBar.style.width = "0%";
+
+        // Скрываем модель
+        modelViewer.classList.remove("visible", "interactive");
+
+        // Включаем клики по области фильтров
+        filterClickArea.classList.remove("disabled");
+
+        // Сбрасываем флаги
+        isMelting = false;
+        wasInAR = false;
+
+        // Скрываем модальное окно если открыто
+        hideModal();
+
+        console.log("Состояние полностью сброшено");
+      }
+
       // Инициализация при загрузке страницы
       window.addEventListener("load", async () => {
-        console.log("Страница загружена");
+        console.log("Страница загружена, начинаем инициализацию...");
 
         // Инициализируем камеру
-        await initCamera();
+        const cameraSuccess = await initCamera();
+        if (!cameraSuccess) {
+          console.error("Не удалось инициализировать камеру");
+        } else {
+          console.log("Камера успешно инициализирована");
+        }
 
         // Создаем снежинки
         createSnowflakes();
 
-        console.log("Готово к работе. Кликайте по экрану.");
+        console.log(
+          "Инициализация завершена. Кликайте по экрану для смены фильтров."
+        );
+        console.log(
+          "Доступные тестовые функции в консоли: window.testFunctions"
+        );
       });
 
       // Обработчики событий
@@ -602,72 +720,76 @@
       moreBtn.addEventListener("click", () => {
         console.log("Кнопка 'Записать еще' нажата");
         hideModal();
-        // НЕ сбрасываем состояние, как вы просили
+        resetToInitialState();
       });
 
       // Закрытие модального окна при клике на оверлей
       arExitModal.addEventListener("click", (e) => {
         if (e.target === arExitModal) {
+          console.log("Клик по оверлею модального окна");
           hideModal();
         }
       });
 
-      // ОТСЛЕЖИВАНИЕ AR СОБЫТИЙ - ИСПРАВЛЕННАЯ ВЕРСИЯ
+      // Сброс по двойному клику
+      cameraWrapper.addEventListener("dblclick", (e) => {
+        console.log("Двойной клик обнаружен");
+        resetToInitialState();
+      });
+
+      // Отслеживание AR событий
       modelViewer.addEventListener("ar-status", (event) => {
-        console.log("AR статус изменился:", event.detail.status);
+        console.log("AR статус:", event.detail.status);
 
         if (event.detail.status === "session-started") {
           console.log("AR сессия началась");
           wasInAR = true;
-          // Скрываем модалку если была открыта
-          hideModal();
+          hideModal(); // Скрываем модалку если открыта при входе в AR
         }
 
         if (event.detail.status === "session-ended") {
           console.log("AR сессия завершилась");
-          if (wasInAR && !arModalShown) {
-            console.log("Показываем модальное окно после AR");
-            // Даем небольшую задержку
+          if (wasInAR && filtersCompleted) {
+            console.log("Показываем модальное окно после выхода из AR");
+            // Небольшая задержка перед показом модального окна
             setTimeout(() => {
-              showModal();
-            }, 500);
+              if (!arModalShownAfterExit) {
+                showModal();
+              }
+            }, 300);
           }
           wasInAR = false;
         }
       });
 
-      // Также отслеживаем visibilitychange для надежности
-      document.addEventListener("visibilitychange", () => {
-        console.log("Видимость страницы:", document.visibilityState);
-
-        if (document.visibilityState === "visible") {
-          // Если страница снова стала видимой и мы были в AR
-          if (wasInAR && !arModalShown) {
-            console.log("Вернулись из AR через visibilitychange");
-            setTimeout(() => {
-              showModal();
-            }, 300);
-            wasInAR = false;
-          }
-        }
-      });
-
       // Для тестирования в консоли
       window.testFunctions = {
+        changeFilter,
+        resetToInitialState,
+        unlockModel,
+        showModal,
+        hideModal,
         getCurrentState: () => ({
           currentFilterIndex,
           filtersCompleted,
           isMelting,
+          currentFilter: filters[currentFilterIndex]?.id || "none",
+          filterActive:
+            filters[currentFilterIndex]?.classList.contains("active"),
+          cameraActive: !!currentStream,
           wasInAR,
-          arModalShown,
-          ice4Visible: filter3.classList.contains("active"),
+          arModalShownAfterExit,
         }),
-        showModal: () => showModal(),
-        hideModal: () => hideModal(),
+        simulateClicks: (count) => {
+          for (let i = 0; i < count; i++) {
+            setTimeout(() => changeFilter(), i * 500);
+          }
+        },
       };
 
+      console.log("Тестовые функции доступны в window.testFunctions");
       console.log(
-        "Для тестирования используйте window.testFunctions в консоли"
+        "Используйте testFunctions.simulateClicks(3) для быстрого тестирования"
       );
     </script>
   </body>
