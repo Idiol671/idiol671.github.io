@@ -416,6 +416,7 @@
       let isMelting = false;
       let currentStream = null;
       let wasInAR = false;
+      let filtersCompleted = false; // Новый флаг для отслеживания завершения фильтров
 
       // Инициализация камеры
       async function initCamera() {
@@ -479,6 +480,12 @@
 
       // Смена фильтра
       function changeFilter() {
+        // Если фильтры уже завершены, не делаем ничего
+        if (filtersCompleted) {
+          console.log("Фильтры уже завершены, дальнейшие клики игнорируются");
+          return;
+        }
+
         if (isMelting) {
           console.log("Эффект таяния уже активен");
           return;
@@ -497,13 +504,16 @@
           filters[currentFilterIndex].classList.add("active");
           console.log("Переключили на фильтр:", currentFilterIndex);
 
-          // Если это последний фильтр
+          // Если это последний фильтр (ice-4)
           if (currentFilterIndex === filters.length - 1) {
-            console.log("Активируем финальный эффект");
+            console.log(
+              "Достигнут последний фильтр (ice-4), активируем финальный эффект"
+            );
+            filtersCompleted = true; // Устанавливаем флаг завершения
             startFinalEffect();
           }
         } else {
-          // Если дошли до конца, возвращаемся к первому
+          // Если дошли до конца, возвращаемся к первому (не должно происходить, так как есть флаг filtersCompleted)
           currentFilterIndex = 0;
           filters[currentFilterIndex].classList.add("active");
         }
@@ -588,6 +598,9 @@
         filters[0].classList.add("active");
         currentFilterIndex = 0;
 
+        // Сбрасываем флаг завершения фильтров
+        filtersCompleted = false;
+
         // Скрываем снежинки
         snowflakes.classList.remove("active");
 
@@ -666,6 +679,12 @@
         unlockModel,
         showModal,
         hideModal,
+        getCurrentState: () => ({
+          currentFilterIndex,
+          filtersCompleted,
+          isMelting,
+          currentFilter: filters[currentFilterIndex].id,
+        }),
       };
 
       console.log("Тестовые функции доступны в window.testFunctions");
