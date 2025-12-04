@@ -906,6 +906,86 @@
           }
         }
       }
+      function activateAutoAR() {
+        // Показываем уведомление
+        autoArNotification.classList.add("show");
+
+        console.log("Автоматически запускаем AR...");
+
+        // Даем время на завершение анимаций
+        setTimeout(() => {
+          // Находим кнопку AR внутри model-viewer
+          const arButton = modelViewer.shadowRoot.querySelector(".ar-button");
+
+          if (arButton) {
+            console.log("Кнопка AR найдена, автоматически нажимаем...");
+
+            arButton.click();
+
+            // Повторная попытка для надежности
+            setTimeout(() => {
+              if (!wasInAR) {
+                console.log("Повторная попытка нажатия AR кнопки...");
+                arButton.click();
+              }
+            }, 500);
+
+            // Прячем уведомление
+            setTimeout(() => {
+              autoArNotification.classList.remove("show");
+            }, 2000);
+
+            autoArTriggered = true;
+            wasInAR = true;
+          } else {
+            console.log("Кнопка AR не найдена, используем API...");
+
+            if (modelViewer.activateAR) {
+              setTimeout(() => {
+                modelViewer.activateAR();
+                console.log("AR активирован через API activateAR()");
+                wasInAR = true;
+              }, 500);
+            } else {
+              console.log("Пытаемся найти кнопку позже...");
+
+              const retryInterval = setInterval(() => {
+                const retryButton =
+                  modelViewer.shadowRoot.querySelector(".ar-button");
+                if (retryButton) {
+                  console.log(
+                    "Кнопка AR найдена при повторной попытке, нажимаем..."
+                  );
+                  retryButton.click();
+                  clearInterval(retryInterval);
+                  wasInAR = true;
+
+                  setTimeout(() => {
+                    autoArNotification.classList.remove("show");
+                  }, 2000);
+
+                  autoArTriggered = true;
+                }
+              }, 200);
+
+              setTimeout(() => {
+                clearInterval(retryInterval);
+                if (!autoArTriggered) {
+                  console.log("Не удалось найти кнопку AR");
+                  autoArNotification.innerHTML = `
+                    <div>🎉 Финальный фильтр активирован!</div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">Нажмите кнопку "Посмотреть в AR"</div>
+                  `;
+
+                  setTimeout(() => {
+                    autoArNotification.classList.remove("show");
+                  }, 4000);
+                }
+              }, 5000);
+            }
+          }
+        }, 500); // Задержка перед запуском AR
+      }
 
       // Финальный эффект
       function startFinalEffect() {
@@ -943,6 +1023,7 @@
 
               // Убираем индикаторы через некоторое время
               setTimeout(() => {
+                activateAutoAR();
                 loadingProgress.classList.remove("active");
                 snowflakes.classList.remove("active");
                 console.log("Эффекты скрыты, модель видна");
