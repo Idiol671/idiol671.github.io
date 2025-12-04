@@ -54,6 +54,14 @@
           <div class="loading-progress" id="loadingProgress">
             <div class="loading-progress-bar" id="loadingProgressBar"></div>
           </div>
+
+          <!-- СВОЯ КНОПКА AR -->
+          <button
+            class="custom-ar-button"
+            id="customArButton"
+            style="display: none">
+            Посмотреть в AR
+          </button>
         </div>
 
         <div class="modal-overlay" id="arExitModal" style="display: none">
@@ -89,7 +97,7 @@
       .fill {
         position: relative;
         width: 100%;
-        height: 100dvh; /* Исправлено с 100vh на 100dvh */
+        height: 100dvh;
         display: flex;
         flex-direction: column;
         background: url("assets/background.png");
@@ -254,7 +262,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: 10;
+        z-index: 1;
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.5s ease;
@@ -263,19 +271,11 @@
       model-viewer.visible {
         opacity: 1;
         pointer-events: auto;
-        z-index: 10;
+        z-index: 3;
       }
 
-      model-viewer.interactive {
-        cursor: grab;
-      }
-
-      model-viewer.interactive:active {
-        cursor: grabbing;
-      }
-
-      /* Стили для кнопки AR - УЛУЧШЕННЫЕ */
-      model-viewer::part(default-ar-button) {
+      /* СВОЯ КНОПКА AR - ПРОСТАЯ И РАБОЧАЯ */
+      .custom-ar-button {
         position: absolute;
         bottom: 20px;
         left: 50%;
@@ -295,21 +295,19 @@
         text-align: center;
         opacity: 0;
         visibility: hidden;
-        pointer-events: auto !important;
       }
 
-      model-viewer.visible::part(default-ar-button) {
+      .custom-ar-button.visible {
         opacity: 1;
         visibility: visible;
-        pointer-events: auto !important;
       }
 
-      model-viewer::part(default-ar-button):hover {
+      .custom-ar-button:hover {
         transform: translateX(-50%) translateY(-2px);
         box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
       }
 
-      model-viewer::part(default-ar-button):active {
+      .custom-ar-button:active {
         transform: translateX(-50%) translateY(0);
       }
 
@@ -433,6 +431,7 @@
       const arExitModal = document.getElementById("arExitModal");
       const closeModalBtn = document.getElementById("closeModalBtn");
       const moreBtn = document.getElementById("moreBtn");
+      const customArButton = document.getElementById("customArButton");
 
       // Массивы и переменные
       const filters = [filter1, filter2, filter3];
@@ -533,7 +532,7 @@
         }
       }
 
-      // Смена фильтра - УПРОЩЕННАЯ ЛОГИКА
+      // Смена фильтра
       function changeFilter() {
         console.log("Клик! Текущий фильтр:", currentFilterIndex);
 
@@ -601,11 +600,9 @@
             // Запускаем эффект "таяния" (но ice-4 остается видимым!)
             setTimeout(() => {
               console.log("Запускаем анимацию таяния для ice-4");
-              // Ключевое: ice-4 получает класс melting, но остается видимым!
-              // Класс active остается, opacity в CSS остается 1
               filters[currentFilterIndex].classList.add("melting");
 
-              // Показываем модель
+              // Показываем модель и кнопку AR
               unlockModel();
 
               // Убираем индикаторы через некоторое время
@@ -619,22 +616,22 @@
         }, 200);
       }
 
-      // Показать модель
+      // Показать модель и кнопку AR
       function unlockModel() {
-        console.log("Показываем 3D модель");
+        console.log("Показываем 3D модель и кнопку AR");
         modelViewer.classList.add("visible");
 
-        // Принудительно обновляем стили кнопки AR
+        // Показываем нашу кнопку AR
         setTimeout(() => {
-          modelViewer.classList.add("interactive");
-          console.log("Модель интерактивна, кнопка AR должна быть видна");
+          customArButton.classList.add("visible");
+          customArButton.style.display = "block";
 
-          // Принудительно показываем кнопку AR
+          // Также пытаемся найти и показать стандартную кнопку
           setTimeout(() => {
             const arButton =
               modelViewer.shadowRoot?.querySelector(".ar-button");
             if (arButton) {
-              console.log("Кнопка AR найдена в shadow DOM");
+              console.log("Найдена стандартная кнопка AR");
               arButton.style.opacity = "1";
               arButton.style.visibility = "visible";
               arButton.style.pointerEvents = "auto";
@@ -644,6 +641,31 @@
 
         // Отключаем клики по области фильтров
         filterClickArea.classList.add("disabled");
+      }
+
+      // Запуск AR через нашу кнопку
+      function startAR() {
+        console.log("Запуск AR режима");
+
+        // Пробуем через API model-viewer
+        if (modelViewer.activateAR) {
+          console.log("Запуск AR через activateAR()");
+          modelViewer.activateAR();
+          wasInAR = true;
+          return;
+        }
+
+        // Пробуем найти и кликнуть на стандартную кнопку
+        const arButton = modelViewer.shadowRoot?.querySelector(".ar-button");
+        if (arButton) {
+          console.log("Клик по стандартной кнопке AR");
+          arButton.click();
+          wasInAR = true;
+          return;
+        }
+
+        console.log("Не удалось найти способ запустить AR");
+        alert("AR режим недоступен в этом браузере");
       }
 
       // Показать модальное окно
@@ -683,6 +705,9 @@
       // Обработчики событий
       filterClickArea.addEventListener("click", changeFilter);
 
+      // Клик по нашей кнопке AR
+      customArButton.addEventListener("click", startAR);
+
       closeModalBtn.addEventListener("click", () => {
         console.log("Кнопка 'Продолжить' нажата");
         hideModal();
@@ -720,13 +745,16 @@
         }
       });
 
-      // Отслеживание AR событий для установки флага wasInAR
+      // Отслеживание AR событий
       modelViewer.addEventListener("ar-status", (event) => {
         console.log("AR статус:", event.detail.status);
 
         if (event.detail.status === "session-started") {
           console.log("AR сессия началась");
           wasInAR = true;
+          // Скрываем нашу кнопку при входе в AR
+          customArButton.classList.remove("visible");
+          customArButton.style.display = "none";
         }
 
         if (event.detail.status === "session-ended") {
@@ -738,26 +766,17 @@
             }, 300);
             wasInAR = false;
           }
+          // Показываем кнопку снова после выхода из AR
+          customArButton.classList.add("visible");
+          customArButton.style.display = "block";
         }
       });
-
-      // Принудительный клик по кнопке AR для тестирования
-      function forceArButtonClick() {
-        const arButton = modelViewer.shadowRoot?.querySelector(".ar-button");
-        if (arButton) {
-          console.log("Принудительный клик по кнопке AR");
-          arButton.click();
-          return true;
-        }
-        console.log("Кнопка AR не найдена");
-        return false;
-      }
 
       // Для тестирования
       window.debug = {
         showModal: showModal,
         hideModal: hideModal,
-        forceArButtonClick: forceArButtonClick,
+        startAR: startAR,
         unlockModel: unlockModel,
         getState: () => ({
           currentFilterIndex,
@@ -767,6 +786,7 @@
           ice4Melting: filter3.classList.contains("melting"),
           wasInAR,
           modelVisible: modelViewer.classList.contains("visible"),
+          arButtonVisible: customArButton.classList.contains("visible"),
         }),
         simulateClicks: () => {
           changeFilter();
