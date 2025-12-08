@@ -59,7 +59,7 @@
           </div>
         </div>
 
-        <!-- МОДАЛКА ИНСТРУКЦИИ - ПОКАЗЫВАЕТСЯ ПРИ ЗАГРУЗКЕ -->
+        <!-- МОДАЛКА ИНСТРУКЦИИ - ПОКАЗЫВАЕТСЯ ПЕРВОЙ -->
         <div class="instruction" id="instructionModal">
           <div class="instruction-fill">
             <div class="instruction-content">
@@ -154,7 +154,7 @@
                 </div>
               </div>
               <button class="instruction__close" id="instructionCloseBtn">
-                ЗАКРЫТЬ
+                ПОНЯТНО
               </button>
             </div>
             <div class="instruction-content">
@@ -168,6 +168,21 @@
                 для записи видео
               </p>
             </div>
+          </div>
+        </div>
+
+        <!-- МОДАЛКА ABOUT - ПОКАЗЫВАЕТСЯ ПОСЛЕ ИНСТРУКЦИИ -->
+        <div class="about" id="aboutModal" style="display: none">
+          <div class="about-content">
+            <p class="about__title">
+              Сейчас вы сможете запустить VR приложение и записать новогоднее
+              видео
+              <br /><br />
+              Запищите новогоднее видео и покажите его в павильоне умный город
+              для получения приза!
+            </p>
+            <img src="assets/about.png" alt="" class="about__img" />
+            <button class="about__close" id="aboutBtn">Начать</button>
           </div>
         </div>
 
@@ -565,7 +580,7 @@
         background: #66bb6a;
       }
 
-      /* Instruction modal - ПОКАЗЫВАЕТСЯ ПРИ ЗАГРУЗКЕ */
+      /* Instruction modal - ПОКАЗЫВАЕТСЯ ПЕРВОЙ */
       .instruction {
         position: fixed;
         top: 0;
@@ -648,6 +663,65 @@
       }
       .instruction__subtitle span {
         font-weight: 700;
+      }
+
+      /* About modal - ПОКАЗЫВАЕТСЯ ВТОРОЙ */
+      .about {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        overflow: auto;
+        padding: 40px;
+      }
+      .about.show {
+        display: flex;
+      }
+      .about-content {
+        background: #fff;
+        padding: 20px 16px;
+        border-radius: 16px;
+        margin: 20px;
+        max-width: 400px;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .about__title {
+        margin: 0;
+        font-size: 20px;
+        color: #000;
+        text-align: left;
+      }
+      .about__img {
+        margin: 20px 0;
+        max-width: 100%;
+        width: 100%;
+        border-radius: 16px;
+      }
+      .about__close {
+        margin-top: 10px;
+        height: 47px;
+        background: #2d41a3;
+        border-radius: 8px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        font-size: 16px;
+        text-align: center;
+        color: #fff;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
       }
 
       /* Tree modal - ПОКАЗЫВАЕТСЯ ПОСЛЕ ВЫХОДА ИЗ AR */
@@ -734,6 +808,8 @@
       const instructionCloseBtn = document.getElementById(
         "instructionCloseBtn"
       );
+      const aboutModal = document.getElementById("aboutModal");
+      const aboutBtn = document.getElementById("aboutBtn");
       const treeModal = document.getElementById("treeModal");
       const treeCloseBtn = document.getElementById("treeCloseBtn");
 
@@ -745,8 +821,9 @@
       let wasInAR = false;
       let filtersCompleted = false;
       let instructionShown = false;
+      let aboutShown = false;
       let treeShownAfterAR = false;
-      let autoArTriggered = false; // Флаг для отслеживания авто-запуска AR
+      let autoArTriggered = false;
 
       // Инициализация камеры
       async function initCamera() {
@@ -836,18 +913,31 @@
         }
       }
 
-      // Закрыть инструкцию и активировать взаимодействие
+      // Закрыть инструкцию и показать about
       function closeInstruction() {
-        console.log("Закрываем инструкцию");
+        console.log("Закрываем инструкцию, показываем about");
         instructionModal.style.display = "none";
         instructionShown = true;
 
+        // Показываем about модалку
+        setTimeout(() => {
+          aboutModal.style.display = "flex";
+          aboutModal.classList.add("show");
+          aboutShown = true;
+        }, 300);
+      }
+
+      // Закрыть about и начать основной процесс
+      function closeAbout() {
+        console.log("Закрываем about, начинаем основной процесс");
+        aboutModal.style.display = "none";
+        aboutModal.classList.remove("show");
+
         // Показываем камеру и активируем фильтры
         cameraWrapper.style.display = "block";
-
-        // Активируем клики по фильтрам
         filterClickArea.style.pointerEvents = "auto";
-        console.log("Инструкция закрыта, можно взаимодействовать с фильтром");
+
+        console.log("About закрыта, можно взаимодействовать с фильтром");
       }
 
       // Показать tree модалку
@@ -867,9 +957,9 @@
 
       // Смена фильтра
       function changeFilter() {
-        // Проверяем, была ли показана инструкция
-        if (!instructionShown) {
-          console.log("Инструкция еще не закрыта, фильтры не активны");
+        // Проверяем, были ли показаны инструкции
+        if (!instructionShown || !aboutShown) {
+          console.log("Инструкции еще не закрыты, фильтры не активны");
           return;
         }
 
@@ -910,7 +1000,7 @@
         }
       }
 
-      // Автоматический запуск AR - ИСПРАВЛЕННАЯ ВЕРСИЯ
+      // Автоматический запуск AR
       function activateAutoAR() {
         console.log("Автоматически запускаем AR...");
         autoArTriggered = true;
@@ -959,11 +1049,10 @@
               clearInterval(retryInterval);
               if (!wasInAR) {
                 console.log("Не удалось автоматически запустить AR");
-                // Можем показать инструкцию или ничего не делать
               }
             }, 5000);
           }
-        }, 1500); // Задержка перед запуском AR
+        }, 1500);
       }
 
       // Финальный эффект
@@ -994,7 +1083,6 @@
             // Запускаем эффект "таяния"
             setTimeout(() => {
               console.log("Запускаем анимацию таяния для ice-4");
-              // Ice-4 получает melting но остается видимым!
               filters[currentFilterIndex].classList.add("melting");
 
               // Показываем модель
@@ -1031,12 +1119,11 @@
         filterClickArea.classList.add("disabled");
       }
 
-      // Запуск AR вручную (если пользователь сам нажмет кнопку)
+      // Запуск AR вручную
       async function startAR() {
         console.log("Нажата кнопка AR вручную");
 
         try {
-          // Пробуем активировать AR через API model-viewer
           if (modelViewer.activateAR) {
             console.log("Активируем AR через activateAR()");
             await modelViewer.activateAR();
@@ -1044,10 +1131,8 @@
             return;
           }
 
-          // Если activateAR не доступен, пробуем другие методы
           console.log("activateAR не доступен, пробуем другие методы...");
 
-          // Пробуем через canActivateAR
           if (modelViewer.canActivateAR) {
             console.log("Проверяем canActivateAR...");
             if (await modelViewer.canActivateAR()) {
@@ -1103,15 +1188,22 @@
 
       // Обработчики событий
       instructionCloseBtn.addEventListener("click", closeInstruction);
+      aboutBtn.addEventListener("click", closeAbout);
       treeCloseBtn.addEventListener("click", closeTreeModal);
       filterClickArea.addEventListener("click", changeFilter);
       closeModalBtn.addEventListener("click", hideModal);
       moreBtn.addEventListener("click", hideModal);
 
-      // Закрытие модального окна при клике на оверлей
+      // Закрытие модальных окон при клике на оверлей
       arExitModal.addEventListener("click", (e) => {
         if (e.target === arExitModal) {
           hideModal();
+        }
+      });
+
+      aboutModal.addEventListener("click", (e) => {
+        if (e.target === aboutModal) {
+          closeAbout();
         }
       });
 
@@ -1127,7 +1219,7 @@
         }
       });
 
-      // ОТСЛЕЖИВАНИЕ ВЫХОДА ИЗ AR
+      // Отслеживание выхода из AR
       document.addEventListener("visibilitychange", () => {
         console.log("Visibility change:", document.visibilityState);
 
@@ -1137,7 +1229,6 @@
             console.log(
               "Были в AR и фильтры завершены - показываем tree модалку"
             );
-            // Сначала показываем tree модалку
             setTimeout(() => {
               showTreeModal();
             }, 300);
@@ -1158,7 +1249,7 @@
         if (event.detail.status === "session-started") {
           console.log("AR сессия началась");
           wasInAR = true;
-          autoArTriggered = true; // Устанавливаем флаг, что AR запущен
+          autoArTriggered = true;
         }
 
         if (event.detail.status === "session-ended") {
@@ -1179,14 +1270,18 @@
         unlockModel: unlockModel,
         showModal: showModal,
         closeInstruction: closeInstruction,
+        closeAbout: closeAbout,
         showTreeModal: showTreeModal,
         closeTreeModal: closeTreeModal,
         activateAutoAR: activateAutoAR,
         simulateClicks: () => {
-          closeInstruction(); // Сначала закрываем инструкцию
+          closeInstruction();
           setTimeout(() => {
-            changeFilter();
-            setTimeout(() => changeFilter(), 500);
+            closeAbout();
+            setTimeout(() => {
+              changeFilter();
+              setTimeout(() => changeFilter(), 500);
+            }, 100);
           }, 100);
         },
         getState: () => ({
@@ -1194,6 +1289,7 @@
           filtersCompleted,
           isMelting,
           instructionShown,
+          aboutShown,
           treeShownAfterAR,
           autoArTriggered,
           ice4Active: filter3.classList.contains("active"),
@@ -1206,7 +1302,6 @@
       console.log("Тестовые функции доступны в window.debug");
       console.log("debug.simulateClicks() - быстрое тестирование");
       console.log("debug.activateAutoAR() - принудительный запуск AR");
-      console.log("debug.closeInstruction() - закрыть инструкцию");
     </script>
   </body>
 </html>
