@@ -864,70 +864,70 @@
       let showTreeModalAfterFilters = false; // Новая переменная
 
       // Инициализация камеры
-      async function initCamera() {
-        try {
-          console.log("Запуск инициализации камеры...");
+      // async function initCamera() {
+      //   try {
+      //     console.log("Запуск инициализации камеры...");
 
-          if (currentStream) {
-            currentStream.getTracks().forEach((track) => track.stop());
-          }
+      //     if (currentStream) {
+      //       currentStream.getTracks().forEach((track) => track.stop());
+      //     }
 
-          const constraints = {
-            video: {
-              facingMode: "environment",
-              width: {ideal: 1280},
-              height: {ideal: 720},
-            },
-            audio: false,
-          };
+      //     const constraints = {
+      //       video: {
+      //         facingMode: "environment",
+      //         width: {ideal: 1280},
+      //         height: {ideal: 720},
+      //       },
+      //       audio: false,
+      //     };
 
-          console.log("Пытаемся получить доступ к камере...");
+      //     console.log("Пытаемся получить доступ к камере...");
 
-          let stream;
-          try {
-            stream = await navigator.mediaDevices.getUserMedia(constraints);
-            console.log("Камера получена с facingMode: environment");
-          } catch (err) {
-            console.log("Не удалось получить заднюю камеру, пробуем user...");
-            try {
-              stream = await navigator.mediaDevices.getUserMedia({
-                video: {facingMode: "user"},
-                audio: false,
-              });
-              console.log("Камера получена с facingMode: user");
-            } catch (err2) {
-              console.log("Пробуем любую камеру...");
-              stream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-                audio: false,
-              });
-              console.log("Камера получена (любая доступная)");
-            }
-          }
+      //     let stream;
+      //     try {
+      //       stream = await navigator.mediaDevices.getUserMedia(constraints);
+      //       console.log("Камера получена с facingMode: environment");
+      //     } catch (err) {
+      //       console.log("Не удалось получить заднюю камеру, пробуем user...");
+      //       try {
+      //         stream = await navigator.mediaDevices.getUserMedia({
+      //           video: {facingMode: "user"},
+      //           audio: false,
+      //         });
+      //         console.log("Камера получена с facingMode: user");
+      //       } catch (err2) {
+      //         console.log("Пробуем любую камеру...");
+      //         stream = await navigator.mediaDevices.getUserMedia({
+      //           video: true,
+      //           audio: false,
+      //         });
+      //         console.log("Камера получена (любая доступная)");
+      //       }
+      //     }
 
-          currentStream = stream;
-          video.srcObject = stream;
+      //     currentStream = stream;
+      //     video.srcObject = stream;
 
-          video.onloadedmetadata = () => {
-            console.log(
-              "Видео загружено, размеры:",
-              video.videoWidth,
-              "x",
-              video.videoHeight
-            );
-          };
+      //     video.onloadedmetadata = () => {
+      //       console.log(
+      //         "Видео загружено, размеры:",
+      //         video.videoWidth,
+      //         "x",
+      //         video.videoHeight
+      //       );
+      //     };
 
-          video.onerror = (e) => {
-            console.error("Ошибка видео:", e);
-          };
+      //     video.onerror = (e) => {
+      //       console.error("Ошибка видео:", e);
+      //     };
 
-          console.log("Камера успешно инициализирована");
-          return true;
-        } catch (err) {
-          console.error("Критическая ошибка при инициализации камеры:", err);
-          return false;
-        }
-      }
+      //     console.log("Камера успешно инициализирована");
+      //     return true;
+      //   } catch (err) {
+      //     console.error("Критическая ошибка при инициализации камеры:", err);
+      //     return false;
+      //   }
+      // }
 
       // Создание снежинок
       function createSnowflakes() {
@@ -1226,7 +1226,7 @@
         aboutShown = true;
 
         // Инициализируем камеру в фоне
-        await initCamera();
+        // await initCamera();
 
         // Создаем снежинки
         createSnowflakes();
