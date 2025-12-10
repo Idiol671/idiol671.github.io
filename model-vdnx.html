@@ -63,14 +63,20 @@
         <!-- МОДАЛКА ABOUT - ПОКАЗЫВАЕТСЯ ПЕРВОЙ -->
         <div class="about" id="aboutModal">
           <div class="about-content">
-            <p class="about__title">
-              Сейчас вы сможете запустить VR приложение и записать новогоднее видео
-              <br /><br />
-              Запищите новогоднее видео и покажите его в павильоне умный город
-              для получения приза!
-            </p>
-            <img src="assets/about.png" alt="" class="about__img" />
-            <button class="about__close" id="aboutBtn">Начать</button>
+            <div class="about-block">
+              <p class="about__title">
+                Создайте <span>новогоднее</span> 
+                настроение
+              </p>
+              <p class="about__text">Запустите AR-приложение и запишите AR-видеопоздравление с атрибутами праздника.</p>
+            </div>
+            <div class="about-block">
+              <p class="about-block__subtitle">Начнем создавать праздник вместе</p>
+              <p class="about-block__text about-block__text--2">Покажите получившийся видеоролик в павильоне <span>«Умный город»</span> для получения новогоднего сувенира.</p>
+              <img src="assets/about-map.png" alt="" class="about__img" />
+              <p class="about__title about__title--last">Призы получат первые 1000 человек.</p>
+              <button class="about__close" id="aboutBtn">ПРОДОЛЖИТЬ</button>
+            </div>
           </div>
         </div>
 
@@ -153,7 +159,7 @@
                     xmlns="http://www.w3.org/2000/svg">
                     <g clip-path="url(#clip0_6853_5474)">
                       <path
-                        d="M2.92999 17.07C1.97489 16.1475 1.21306 15.044 0.688974 13.824C0.164884 12.604 -0.110979 11.2918 -0.122517 9.96397C-0.134055 8.63618 0.118962 7.31938 0.621771 6.09042C1.12458 4.86145 1.86711 3.74493 2.80604 2.80601C3.74496 1.86708 4.86148 1.12455 6.09045 0.62174C7.31941 0.118932 8.63621 -0.134085 9.964 -0.122547C11.2918 -0.111009 12.604 0.164853 13.824 0.688943C15.0441 1.21303 16.1475 1.97486 17.07 2.92996C18.8916 4.81598 19.8995 7.342 19.8767 9.96397C19.8539 12.5859 18.8023 15.0941 16.9482 16.9481C15.0941 18.8022 12.586 19.8539 9.964 19.8767C7.34203 19.8995 4.81601 18.8915 2.92999 17.07ZM11.4 9.99996L14.23 7.16996L12.82 5.75996L9.99999 8.58996L7.16999 5.75996L5.75999 7.16996L8.58999 9.99996L5.75999 12.83L7.16999 14.24L9.99999 11.41L12.83 14.24L14.24 12.83L11.41 9.99996H11.4Z"
+                        d="M2.92999 17.07C1.97489 16.1475 1.21306 15.044 0.688974 13.824C0.164884 12.604 -0.110979 11.2918 -0.122517 9.96397C-0.134055 8.63618 0.118962 7.31938 0.621771 6.09042C1.12458 4.86145 1.86711 3.74493 2.80604 2.80601C3.74496 1.86708 4.86148 1.12455 6.09045 0.62174C7.31941 0.118932 8.63621 -0.134085 9.964 -0.122547C11.2918 -0.111009 12.604 0.164853 13.824 0.688943C15.0441 1.21303 16.1475 1.97486 17.07 2.92996C18.8916 4.81598 19.8995 7.342 19.8767 9.96397C19.8539 12.5859 18.8023 15.0941 16.9482 16.9481C15.0941 18.8022 12.586 19.8539 9.964 19.8767C7.34203 19.8995 4.81601 18.8915 2.92999 17.07ZM11.4 9.99996L14.23 7.16996L12.82 5.75996L9.99999 8.58996L7.16999 5.75996L5.75999 7.16996L8.58999 9.99996L5.75999 12.83L7.16999 14.24L9.99999 11.41L12.83 14.24L14.24 12.83/L11.41 9.99996H11.4Z"
                         fill="white" />
                     </g>
                     <defs>
@@ -186,21 +192,14 @@
           </div>
         </div>
 
-        <!-- МОДАЛКА TREE - ПОКАЗЫВАЕТСЯ ПОСЛЕ ВЫХОДА ИЗ AR -->
+        <!-- МОДАЛКА TREE - ПОКАЗЫВАЕТСЯ ПОСЛЕ ФИЛЬТРА СО ЛЬДОМ -->
         <div class="tree" id="treeModal" style="display: none">
           <div class="tree-content">
-            <img src="assets/logo.svg" alt="" class="tree__logo" />
             <p class="tree__title">
-              Зажгите новогоднюю ёлку и запустите праздник в МетаВДНХ!
+              <span>Ура!</span><br>
+              Вы разморозили новогоднюю елку в метавселенной, а теперь создайте новогоднее AR-видеопоздравление.
             </p>
-            <img src="assets/tree.png" alt="" class="tree__img" />
-            <p class="tree__text">
-              Праздник уже вот-вот наступит, а елка еще не готова. Пройдите
-              через разные эпохи, познакомьтесь с традициями Петра I и украсьте
-              новогоднюю елку. Создайте уникальную видеооткрытку и поздравьте
-              близких с наступающим 2026 годом!
-            </p>
-            <button class="tree__close" id="treeCloseBtn">Перейти</button>
+            <button class="tree__close" id="treeCloseBtn">Дальше</button>
           </div>
         </div>
 
@@ -598,9 +597,6 @@
         display: flex;
       }
       .about-content {
-        background: #fff;
-        padding: 20px 16px;
-        border-radius: 16px;
         margin: 20px;
         max-width: 400px;
         margin: auto;
@@ -608,18 +604,59 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
+        gap: 33px;
+      }
+      .about-block{
+        padding: 16px 26px;
+        background: #fff;
+        width: 100%;
+        border-radius: 16px;
       }
       .about__title {
-        margin: 0;
+        font-weight: 700;
         font-size: 20px;
+        text-transform: uppercase;
+        text-align: center;
+        color: #1e1e1e;
+        margin: 0;
+      }
+      .about__title span{
+        color: #4257c2;
+      }
+      .about__text{
+        margin: 16px 0 0 0;
+        font-weight: 400;
+        font-size: 16px;
+        text-align: center;
         color: #000;
-        text-align: left;
+      }
+      .about-block__subtitle{
+        margin: 0;
+        font-weight: 700;
+        font-size: 24px;
+        text-align: center;
+        color: #2d41a3;
+      }
+      .about-block__text{
+        margin: 9px 0 0 0;
+        font-size: 16px;
+        text-align: center;
+        color: #000;
+      }
+      .about-block__text span{
+        font-weight: 700;
       }
       .about__img {
-        margin: 20px 0;
+        margin: 8px 0 0 0;
         max-width: 100%;
         width: 100%;
         border-radius: 16px;
+      }
+      .about__title--last{
+        text-transform: unset;
+      }
+      .about__title--last span{
+        color: #4257c2;
       }
       .about__close {
         margin-top: 10px;
@@ -723,7 +760,7 @@
         font-weight: 700;
       }
 
-      /* Tree modal - ПОКАЗЫВАЕТСЯ ПОСЛЕ ВЫХОДА ИЗ AR */
+      /* Tree modal - ПОКАЗЫВАЕТСЯ ПОСЛЕ ФИЛЬТРА СО ЛЬДОМ */
       .tree {
         position: fixed;
         top: 0;
@@ -742,8 +779,8 @@
         display: flex;
       }
       .tree-content {
-        background: #00288c;
-        padding: 30px 24px;
+       background: #fff;
+        padding: 32px 13px 22px 13px;
         border-radius: 16px;
         margin: 20px;
         max-width: 400px;
@@ -755,10 +792,14 @@
         max-width: 143px;
       }
       .tree__title {
-        margin-top: 16px;
-        font-weight: 700;
+        margin-top: 0;
         font-size: 24px;
-        color: #fff;
+        color: #000;
+        text-align: center;
+        margin-bottom: 0;
+      }
+      .tree__title span{
+        font-weight: 700;
       }
       .tree__img {
         margin: 9px auto 0 auto;
@@ -773,7 +814,7 @@
       .tree__close {
         margin-top: 16px;
         height: 47px;
-        background: #f00;
+       background: #2d41a3;
         border-radius: 8px;
         width: 100%;
         display: flex;
@@ -823,6 +864,7 @@
       let aboutShown = false;
       let treeShownAfterAR = false;
       let autoArTriggered = false;
+      let showTreeModalAfterFilters = false; // Новая переменная
 
       // Инициализация камеры
       async function initCamera() {
@@ -938,19 +980,25 @@
         console.log("Инструкция закрыта, можно взаимодействовать с фильтром");
       }
 
-      // Показать tree модалку
+      // Показать tree модалку ПОСЛЕ ФИЛЬТРОВ
       function showTreeModal() {
-        console.log("Показываем tree модалку");
+        console.log("Показываем tree модалку после фильтров");
         treeModal.style.display = "flex";
         treeModal.classList.add("show");
         treeShownAfterAR = true;
+        showTreeModalAfterFilters = true;
       }
 
-      // Закрыть tree модалку
+      // Закрыть tree модалку и запустить AR
       function closeTreeModal() {
-        console.log("Закрываем tree модалку");
+        console.log("Закрываем tree модалку и запускаем AR");
         treeModal.style.display = "none";
         treeModal.classList.remove("show");
+        
+        // Запускаем AR после закрытия tree модалки
+        setTimeout(() => {
+          activateAutoAR();
+        }, 300);
       }
 
       // Смена фильтра
@@ -1092,9 +1140,12 @@
                 snowflakes.classList.remove("active");
                 console.log("Эффекты скрыты, модель видна");
 
-                // Автоматически запускаем AR
-                if (!autoArTriggered) {
-                  activateAutoAR();
+                // ВМЕСТО автоматического запуска AR - показываем tree модалку
+                if (!showTreeModalAfterFilters) {
+                  console.log("Показываем tree модалку после завершения фильтров");
+                  setTimeout(() => {
+                    showTreeModal();
+                  }, 500);
                 }
               }, 2000);
             }, 1000);
@@ -1189,7 +1240,7 @@
       // Обработчики событий
       aboutBtn.addEventListener("click", closeAbout);
       instructionCloseBtn.addEventListener("click", closeInstruction);
-      treeCloseBtn.addEventListener("click", closeTreeModal);
+      treeCloseBtn.addEventListener("click", closeTreeModal); // Теперь эта кнопка запускает AR
       filterClickArea.addEventListener("click", changeFilter);
       closeModalBtn.addEventListener("click", hideModal);
       moreBtn.addEventListener("click", hideModal);
@@ -1215,11 +1266,11 @@
 
       treeModal.addEventListener("click", (e) => {
         if (e.target === treeModal) {
-          closeTreeModal();
+          // Не закрываем при клике на оверлей, только по кнопке
         }
       });
 
-      // Отслеживание выхода из AR
+      // Отслеживание выхода из AR (оставляем для arExitModal)
       document.addEventListener("visibilitychange", () => {
         console.log("Visibility change:", document.visibilityState);
 
@@ -1242,7 +1293,7 @@
         }
       });
 
-      // Отслеживание AR событий model-viewer
+      // Отслеживание AR событий model-viewer (оставляем для arExitModal)
       modelViewer.addEventListener("ar-status", (event) => {
         console.log("AR статус:", event.detail.status);
 
@@ -1278,6 +1329,10 @@
           closeAbout();
           setTimeout(() => {
             closeInstruction();
+            setTimeout(() => {
+              changeFilter();
+              setTimeout(() => changeFilter(), 500);
+            }, 100);
           }, 100);
         },
         getState: () => ({
@@ -1288,6 +1343,7 @@
           aboutShown,
           treeShownAfterAR,
           autoArTriggered,
+          showTreeModalAfterFilters,
           ice4Active: filter3.classList.contains("active"),
           ice4Visible: window.getComputedStyle(filter3).opacity,
           modelVisible: modelViewer.classList.contains("visible"),
