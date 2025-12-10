@@ -60,8 +60,22 @@
           </div>
         </div>
 
-        <!-- МОДАЛКА ИНСТРУКЦИИ - ПОКАЗЫВАЕТСЯ ПЕРВОЙ -->
-        <div class="instruction" id="instructionModal">
+        <!-- МОДАЛКА ABOUT - ПОКАЗЫВАЕТСЯ ПЕРВОЙ -->
+        <div class="about" id="aboutModal">
+          <div class="about-content">
+            <p class="about__title">
+              Сейчас вы сможете запустить VR приложение и записать новогоднее видео
+              <br /><br />
+              Запищите новогоднее видео и покажите его в павильоне умный город
+              для получения приза!
+            </p>
+            <img src="assets/about.png" alt="" class="about__img" />
+            <button class="about__close" id="aboutBtn">Начать</button>
+          </div>
+        </div>
+
+        <!-- МОДАЛКА ИНСТРУКЦИИ - ПОКАЗЫВАЕТСЯ ПОСЛЕ ABOUT -->
+        <div class="instruction" id="instructionModal" style="display: none">
           <div class="instruction-fill">
             <div class="instruction-content">
               <p class="instruction__title">Инструкция по управлению</p>
@@ -169,21 +183,6 @@
                 для записи видео
               </p>
             </div>
-          </div>
-        </div>
-
-        <!-- МОДАЛКА ABOUT - ПОКАЗЫВАЕТСЯ ПОСЛЕ ИНСТРУКЦИИ -->
-        <div class="about" id="aboutModal" style="display: none">
-          <div class="about-content">
-            <p class="about__title">
-              Сейчас вы сможете запустить VR приложение и записать новогоднее
-              видео
-              <br /><br />
-              Запищите новогоднее видео и покажите его в павильоне умный город
-              для получения приза!
-            </p>
-            <img src="assets/about.png" alt="" class="about__img" />
-            <button class="about__close" id="aboutBtn">Начать</button>
           </div>
         </div>
 
@@ -581,14 +580,72 @@
         background: #66bb6a;
       }
 
-      /* Instruction modal - ПОКАЗЫВАЕТСЯ ПЕРВОЙ */
+      /* About modal - ПОКАЗЫВАЕТСЯ ПЕРВОЙ */
+      .about {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        overflow: auto;
+        padding: 40px;
+      }
+      .about.show {
+        display: flex;
+      }
+      .about-content {
+        background: #fff;
+        padding: 20px 16px;
+        border-radius: 16px;
+        margin: 20px;
+        max-width: 400px;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .about__title {
+        margin: 0;
+        font-size: 20px;
+        color: #000;
+        text-align: left;
+      }
+      .about__img {
+        margin: 20px 0;
+        max-width: 100%;
+        width: 100%;
+        border-radius: 16px;
+      }
+      .about__close {
+        margin-top: 10px;
+        height: 47px;
+        background: #2d41a3;
+        border-radius: 8px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        font-size: 16px;
+        text-align: center;
+        color: #fff;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+      }
+
+      /* Instruction modal - ПОКАЗЫВАЕТСЯ ВТОРОЙ */
       .instruction {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        display: flex;
+        display: none;
         align-items: center;
         justify-content: center;
         z-index: 100;
@@ -664,64 +721,6 @@
       }
       .instruction__subtitle span {
         font-weight: 700;
-      }
-
-      /* About modal - ПОКАЗЫВАЕТСЯ ВТОРОЙ */
-      .about {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 100;
-        overflow: auto;
-        padding: 40px;
-      }
-      .about.show {
-        display: flex;
-      }
-      .about-content {
-        background: #fff;
-        padding: 20px 16px;
-        border-radius: 16px;
-        margin: 20px;
-        max-width: 400px;
-        margin: auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-      .about__title {
-        margin: 0;
-        font-size: 20px;
-        color: #000;
-        text-align: left;
-      }
-      .about__img {
-        margin: 20px 0;
-        max-width: 100%;
-        width: 100%;
-        border-radius: 16px;
-      }
-      .about__close {
-        margin-top: 10px;
-        height: 47px;
-        background: #2d41a3;
-        border-radius: 8px;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        font-weight: 600;
-        font-size: 16px;
-        text-align: center;
-        color: #fff;
-        justify-content: center;
-        border: none;
-        cursor: pointer;
       }
 
       /* Tree modal - ПОКАЗЫВАЕТСЯ ПОСЛЕ ВЫХОДА ИЗ AR */
@@ -913,31 +912,30 @@
         }
       }
 
-      // Закрыть инструкцию и показать about
-      function closeInstruction() {
-        console.log("Закрываем инструкцию, показываем about");
-        instructionModal.style.display = "none";
-        instructionShown = true;
+      // Закрыть about и показать instruction
+      function closeAbout() {
+        console.log("Закрываем about, показываем инструкцию");
+        aboutModal.style.display = "none";
+        aboutModal.classList.remove("show");
+        aboutShown = true;
 
-        // Показываем about модалку
+        // Показываем instruction модалку
         setTimeout(() => {
-          aboutModal.style.display = "flex";
-          aboutModal.classList.add("show");
-          aboutShown = true;
+          instructionModal.style.display = "flex";
+          instructionShown = true;
         }, 300);
       }
 
-      // Закрыть about и начать основной процесс
-      function closeAbout() {
-        console.log("Закрываем about, начинаем основной процесс");
-        aboutModal.style.display = "none";
-        aboutModal.classList.remove("show");
+      // Закрыть instruction и начать основной процесс
+      function closeInstruction() {
+        console.log("Закрываем инструкцию, начинаем основной процесс");
+        instructionModal.style.display = "none";
 
         // Показываем камеру и активируем фильтры
         cameraWrapper.style.display = "block";
         filterClickArea.style.pointerEvents = "auto";
 
-        console.log("About закрыта, можно взаимодействовать с фильтром");
+        console.log("Инструкция закрыта, можно взаимодействовать с фильтром");
       }
 
       // Показать tree модалку
@@ -958,8 +956,8 @@
       // Смена фильтра
       function changeFilter() {
         // Проверяем, были ли показаны инструкции
-        if (!instructionShown || !aboutShown) {
-          console.log("Инструкции еще не закрыты, фильтры не активны");
+        if (!aboutShown || !instructionShown) {
+          console.log("Модалки еще не закрыты, фильтры не активны");
           return;
         }
 
@@ -1173,9 +1171,11 @@
       window.addEventListener("load", async () => {
         console.log("Страница загружена, начинаем инициализацию...");
 
-        // Показываем инструкцию сразу при загрузке
-        console.log("Показываем инструкцию");
-        instructionModal.style.display = "flex";
+        // Показываем about модалку первой
+        console.log("Показываем about модалку");
+        aboutModal.style.display = "flex";
+        aboutModal.classList.add("show");
+        aboutShown = true;
 
         // Инициализируем камеру в фоне
         await initCamera();
@@ -1183,39 +1183,39 @@
         // Создаем снежинки
         createSnowflakes();
 
-        console.log("Инициализация завершена. Ожидание закрытия инструкции...");
+        console.log("Инициализация завершена. Ожидание закрытия about...");
       });
 
       // Обработчики событий
-      instructionCloseBtn.addEventListener("click", closeInstruction);
       aboutBtn.addEventListener("click", closeAbout);
+      instructionCloseBtn.addEventListener("click", closeInstruction);
       treeCloseBtn.addEventListener("click", closeTreeModal);
       filterClickArea.addEventListener("click", changeFilter);
       closeModalBtn.addEventListener("click", hideModal);
       moreBtn.addEventListener("click", hideModal);
 
       // Закрытие модальных окон при клике на оверлей
-      arExitModal.addEventListener("click", (e) => {
-        if (e.target === arExitModal) {
-          hideModal();
-        }
-      });
-
       aboutModal.addEventListener("click", (e) => {
         if (e.target === aboutModal) {
           closeAbout();
         }
       });
 
-      treeModal.addEventListener("click", (e) => {
-        if (e.target === treeModal) {
-          closeTreeModal();
-        }
-      });
-
       instructionModal.addEventListener("click", (e) => {
         if (e.target === instructionModal) {
           closeInstruction();
+        }
+      });
+
+      arExitModal.addEventListener("click", (e) => {
+        if (e.target === arExitModal) {
+          hideModal();
+        }
+      });
+
+      treeModal.addEventListener("click", (e) => {
+        if (e.target === treeModal) {
+          closeTreeModal();
         }
       });
 
@@ -1269,19 +1269,15 @@
         startAR: startAR,
         unlockModel: unlockModel,
         showModal: showModal,
-        closeInstruction: closeInstruction,
         closeAbout: closeAbout,
+        closeInstruction: closeInstruction,
         showTreeModal: showTreeModal,
         closeTreeModal: closeTreeModal,
         activateAutoAR: activateAutoAR,
         simulateClicks: () => {
-          closeInstruction();
+          closeAbout();
           setTimeout(() => {
-            closeAbout();
-            setTimeout(() => {
-              changeFilter();
-              setTimeout(() => changeFilter(), 500);
-            }, 100);
+            closeInstruction();
           }, 100);
         },
         getState: () => ({
