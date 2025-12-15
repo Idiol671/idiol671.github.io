@@ -13,7 +13,7 @@
     <main class="main">
       <div class="fill">
         <div class="back">
-          <img src="/assets/logo.svg" alt="Логотип" class="back__logo" />
+          <img src="./logo.svg" alt="Логотип" class="back__logo" />
         </div>
 
         <div class="scene" id="camera-wrapper" style="display: none">
@@ -23,8 +23,8 @@
           <model-viewer
             id="model"
             alt="3D Model"
-            src="/assets/model/Horse_animation.gltf"
-            ios-src="/assets/ios/Horse_animation.usdz"
+            src="./model/Horse_animation.gltf"
+            ios-src="./ios/Horse_animation.usdz"
             camera-controls
             ar
             ar-modes="webxr scene-viewer quick-look"
@@ -39,12 +39,9 @@
           <!-- Контейнер для эффектов льда -->
           <div class="ice-overlay-container">
             <div class="ice-crack" id="iceCrack"></div>
-            <img
-              class="ice-overlay active"
-              id="filter1"
-              src="/assets/ice-1.png" />
-            <img class="ice-overlay" id="filter2" src="/assets/ice-2.png" />
-            <img class="ice-overlay" id="filter3" src="/assets/ice-4.png" />
+            <img class="ice-overlay active" id="filter1" src="./ice-1.png" />
+            <img class="ice-overlay" id="filter2" src="./ice-2.png" />
+            <img class="ice-overlay" id="filter3" src="./ice-4.png" />
           </div>
 
           <!-- Эффект снежинок -->
@@ -71,7 +68,7 @@
               <!-- <p class="about-block__subtitle">
                 Начнем создавать праздник вместе!
               </p> -->
-              <img src="/assets/about-map.png" alt="" class="about__img" />
+              <img src="./about-map.png" alt="" class="about__img" />
               <button class="about__close" id="aboutBtn">ПРОДОЛЖИТЬ</button>
             </div>
           </div>
@@ -153,10 +150,7 @@
                   </p>
                 </div>
               </div>
-              <img
-                src="/assets/instruction.png"
-                alt=""
-                class="instruction__img" />
+              <img src="./instruction.png" alt="" class="instruction__img" />
               <p class="instruction__subtitle">
                 <span>Зажмите</span> кнопку <br />
                 для записи видео
@@ -217,7 +211,7 @@
         height: 100dvh;
         display: flex;
         flex-direction: column;
-        background: url("/assets/background.png");
+        background: url("./background.png");
         background-repeat: repeat;
         background-size: cover;
       }
