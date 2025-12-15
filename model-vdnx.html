@@ -832,30 +832,29 @@
     </style>
 
     <script>
-      function isRealChromeAndroid() {
+      function isGoogleChromeAndroid() {
         const ua = navigator.userAgent;
 
         const isAndroid = /Android/i.test(ua);
 
-        const isChrome = /Chrome\/\d+/i.test(ua);
+        // Chrome версия
+        const hasChrome = /Chrome\/[0-9.]+/i.test(ua);
 
-        // У Google Chrome есть window.chrome.runtime
-        const hasChromeRuntime =
-          typeof window.chrome === "object" &&
-          typeof window.chrome.runtime === "object";
+        // Google Chrome всегда указывает Google Inc.
+        const isGoogleVendor = navigator.vendor === "Google Inc.";
 
-        // Samsung / Yandex / Opera / Brave / Edge
-        const isNotOtherBrowsers =
-          !/SamsungBrowser|YaBrowser|OPR|Opera|EdgA|Brave/i.test(ua);
+        // Явно исключаем другие браузеры
+        const isNotOther =
+          !/SamsungBrowser|YaBrowser|OPR|Opera|EdgA|Edge|Brave|Vivaldi|DuckDuckGo/i.test(
+            ua
+          );
 
-        return isAndroid && isChrome && hasChromeRuntime && isNotOtherBrowsers;
+        return isAndroid && hasChrome && isGoogleVendor && isNotOther;
       }
 
       function showAlertIfChromeAndroid() {
-        if (isRealChromeAndroid()) {
-          alert(
-            "Для корректной работы программы откройте приложение в Яндекс браузере"
-          );
+        if (isGoogleChromeAndroid()) {
+          alert("Google Chrome на Android");
         }
       }
 
