@@ -832,6 +832,22 @@
     </style>
 
     <script>
+      function isAndroidChrome() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isAndroid = /android/.test(userAgent);
+        const isChrome =
+          /chrome/.test(userAgent) &&
+          !/edg|opr|brave|vivaldi|yandex|samsung/.test(userAgent);
+        return isAndroid && isChrome;
+      }
+
+      // Показываем алерт для Android Chrome пользователей
+      if (isAndroidChrome()) {
+        alert(
+          "Для корректной работы программы откройте приложение в Яндекс браузере"
+        );
+      }
+
       // Основные элементы
       const video = document.getElementById("cam");
       const cameraWrapper = document.getElementById("camera-wrapper");
