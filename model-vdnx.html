@@ -832,29 +832,34 @@
     </style>
 
     <script>
-      function isAndroidChrome() {
-        const ua = navigator.userAgent.toLowerCase();
+      function isRealChromeAndroid() {
+        const ua = navigator.userAgent;
 
-        const isAndroid = ua.includes("android");
-        const isChrome =
-          ua.includes("chrome") &&
-          !ua.includes("edg") &&
-          !ua.includes("opr") &&
-          !ua.includes("samsungbrowser");
+        const isAndroid = /Android/i.test(ua);
 
-        return isAndroid && isChrome;
+        const isChrome = /Chrome\/\d+/i.test(ua);
+
+        // У Google Chrome есть window.chrome.runtime
+        const hasChromeRuntime =
+          typeof window.chrome === "object" &&
+          typeof window.chrome.runtime === "object";
+
+        // Samsung / Yandex / Opera / Brave / Edge
+        const isNotOtherBrowsers =
+          !/SamsungBrowser|YaBrowser|OPR|Opera|EdgA|Brave/i.test(ua);
+
+        return isAndroid && isChrome && hasChromeRuntime && isNotOtherBrowsers;
       }
 
-      function showAlertIfAndroidChrome() {
-        if (isAndroidChrome()) {
+      function showAlertIfChromeAndroid() {
+        if (isRealChromeAndroid()) {
           alert(
             "Для корректной работы программы откройте приложение в Яндекс браузере"
           );
         }
       }
 
-      // вызов
-      showAlertIfAndroidChrome();
+      showAlertIfChromeAndroid();
 
       // Основные элементы
       const video = document.getElementById("cam");
