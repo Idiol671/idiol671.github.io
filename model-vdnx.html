@@ -833,20 +833,28 @@
 
     <script>
       function isAndroidChrome() {
-        const userAgent = navigator.userAgent.toLowerCase();
-        const isAndroid = /android/.test(userAgent);
+        const ua = navigator.userAgent.toLowerCase();
+
+        const isAndroid = ua.includes("android");
         const isChrome =
-          /chrome/.test(userAgent) &&
-          !/edg|opr|brave|vivaldi|yandex|samsung/.test(userAgent);
+          ua.includes("chrome") &&
+          !ua.includes("edg") &&
+          !ua.includes("opr") &&
+          !ua.includes("samsungbrowser");
+
         return isAndroid && isChrome;
       }
 
-      // Показываем алерт для Android Chrome пользователей
-      if (isAndroidChrome()) {
-        alert(
-          "Для корректной работы программы откройте приложение в Яндекс браузере"
-        );
+      function showAlertIfAndroidChrome() {
+        if (isAndroidChrome()) {
+          alert(
+            "Для корректной работы программы откройте приложение в Яндекс браузере"
+          );
+        }
       }
+
+      // вызов
+      showAlertIfAndroidChrome();
 
       // Основные элементы
       const video = document.getElementById("cam");
