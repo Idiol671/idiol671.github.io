@@ -365,8 +365,8 @@
       }
 
       model-viewer.visible {
-        opacity: 0;
-        pointer-events: none;
+        opacity: 1;
+        pointer-events: all;
         z-index: 11;
         display: block !important;
       }
@@ -402,18 +402,18 @@
         font-family: inherit;
         transition: opacity 1s ease 2s, visibility 1s ease 2s,
           transform 0.3s ease;
-        opacity: 0;
-        visibility: hidden;
+        opacity: 1;
+        visibility: visible;
       }
 
       model-viewer.visible::part(default-ar-button) {
-        opacity: 0;
-        visibility: hidden;
+        opacity: 1;
+        visibility: visible;
         pointer-events: all;
       }
 
       model-viewer::part(default-exit-webxr-ar-button) {
-        display: none;
+        display: flex;
       }
 
       model-viewer::part(default-ar-button):hover {
