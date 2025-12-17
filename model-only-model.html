@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Важные meta-теги для AR -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent" />
+
+    <!-- Подключаем model-viewer заранее для лучшей производительности -->
     <script
       type="module"
-      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.js"></script>
-    <script
-      nomodule
-      src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
-    <title>VDNX</title>
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   </head>
-
-  <body>
+  <!-- Добавляем data-атрибуты с именами файлов моделей -->
+  <body data-usdz="Horse_animation.usdz" data-gltf="Horse_animation.glb">
     <main class="main">
       <div class="fill">
+        <!-- Скрываем по умолчанию, показываем только если нужно -->
         <model-viewer
           camera-controls
           ar
@@ -22,54 +26,82 @@
           autoplay
           id="model"
           alt="3D Model"
-          src="/assets/simple_horse_animation.glb"
-          ios-src="Horse_animation.usdz"
-          enable-pan>
-          <!-- Скрываем по умолчанию -->
+          src="/assets/models/Horse_animation.glb"
+          enable-pan
+          style="display: none; width: 100%; height: 100vh">
         </model-viewer>
       </div>
     </main>
 
-    <style>
-      model-viewer {
-        width: 100%;
-        height: 100vh;
-      }
-    </style>
-
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // Определение ОС без библиотеки UAParser
+        // Получаем существующий элемент model-viewer
+        const existingViewer = document.getElementById("model");
+
+        // Определение ОС
         const userAgent =
           navigator.userAgent || navigator.vendor || window.opera;
 
         // Определяем iOS
         const isIos = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
 
-        // Определяем Android
-        const isAndroid = /android/i.test(userAgent);
+        // Определяем Android (более точное определение)
+        const isAndroid = /android/i.test(userAgent) && !window.MSStream;
 
         // Получаем данные из data-атрибутов body
         const usdzModel = document.body.dataset.usdz;
         const gltfModel = document.body.dataset.gltf;
 
-        if (isIos) {
-          console.log("iOS detected");
+        // Проверяем поддержку AR в целом
+        const isArSupported =
+          "xr" in navigator ||
+          (document.createElement("a").relList &&
+            document.createElement("a").relList.supports("ar"));
 
+        console.log("Platform detection:", {
+          isIos,
+          isAndroid,
+          userAgent: userAgent.substring(0, 100),
+          isArSupported,
+          hasUsdz: !!usdzModel,
+          hasGltf: !!gltfModel,
+        });
+
+        // Функция для показа существующего model-viewer
+        function showExistingViewer() {
+          if (existingViewer) {
+            console.log("Showing existing model-viewer");
+            existingViewer.style.display = "block";
+
+            // Обновляем src если нужно
+            if (
+              gltfModel &&
+              existingViewer.getAttribute("src") !==
+                "assets/models/" + gltfModel
+            ) {
+              existingViewer.setAttribute("src", "assets/models/" + gltfModel);
+            }
+          } else {
+            console.error("No existing model-viewer element found");
+          }
+        }
+
+        // Функция для открытия AR на iOS
+        function openIosAr() {
           if (!usdzModel) {
-            console.error("USDZ model not specified in data-usdz attribute");
-            loadModelViewer(gltfModel);
+            console.warn("No USDZ model specified for iOS AR");
+            showExistingViewer();
             return;
           }
 
-          const url = "assets/ios/" + usdzModel;
-          console.log("USDZ URL:", url);
+          const url = "assets/models/" + usdzModel;
+          console.log("Opening iOS AR with URL:", url);
 
           const a = document.createElement("a");
-          a.setAttribute("href", url);
-          document.body.appendChild(a);
+          a.href = url;
+          a.style.display = "none";
 
-          // Проверяем поддержку AR (rel="ar")
+          // Проверяем поддержку AR Quick Look
           let supportsAR = false;
           try {
             supportsAR =
@@ -79,179 +111,140 @@
           }
 
           if (supportsAR) {
-            a.setAttribute("rel", "ar");
+            a.rel = "ar";
 
-            // Минимальное прозрачное PNG изображение (1x1 пиксель)
+            // Добавляем миниатюру для AR
             const img = document.createElement("img");
-            img.setAttribute(
-              "src",
-              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-            );
+            img.src =
+              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
             img.style.display = "none";
             a.appendChild(img);
 
-            console.log("AR Quick Look supported");
-          } else {
-            console.log("AR Quick Look not supported");
-          }
+            document.body.appendChild(a);
 
-          // Пытаемся открыть AR
-          setTimeout(() => {
+            // Пытаемся открыть AR
             a.click();
 
-            // Если AR не открылся, через некоторое время показываем fallback
+            // Если через 500мс ссылка еще на странице, AR не открылся
             setTimeout(() => {
               if (document.body.contains(a)) {
-                console.log(
-                  "AR Quick Look likely failed, falling back to model-viewer"
-                );
+                console.log("iOS AR Quick Look failed or cancelled");
                 document.body.removeChild(a);
-                loadModelViewer(gltfModel);
+                showExistingViewer();
               }
-            }, 1000);
-          }, 100);
-        } else if (isAndroid) {
-          console.log("Android detected");
+            }, 500);
+          } else {
+            console.log("AR Quick Look not supported on this iOS device");
+            showExistingViewer();
+          }
+        }
 
+        // Функция для открытия AR на Android
+        function openAndroidAr() {
           if (!gltfModel) {
-            console.error("GLTF model not specified in data-gltf attribute");
-            loadModelViewer(gltfModel);
+            console.warn("No GLTF model specified for Android AR");
+            showExistingViewer();
             return;
           }
 
-          // Проверяем параметр fallback в URL
+          // Проверяем, не находимся ли мы уже в fallback режиме
           const urlParams = new URLSearchParams(window.location.search);
           const hasFallback = urlParams.get("fallback") !== null;
 
-          if (!hasFallback) {
-            // Создаем base URL для моделей
-            const baseUrl = window.location.href.substring(
+          if (hasFallback) {
+            console.log("Already in fallback mode, showing model-viewer");
+            showExistingViewer();
+            return;
+          }
+
+          // Создаем URL для модели
+          const baseUrl =
+            window.location.origin +
+            window.location.pathname.substring(
               0,
-              window.location.href.lastIndexOf("/") + 1
+              window.location.pathname.lastIndexOf("/") + 1
             );
-            const modelUrl =
-              baseUrl + "assets/models/" + encodeURIComponent(gltfModel);
+          const modelUrl =
+            baseUrl + "assets/models/" + encodeURIComponent(gltfModel);
 
-            // Intent URL для Google Scene Viewer
-            const intentUrl =
-              "intent://arvr.google.com/scene-viewer/1.0?" +
-              "file=" +
-              encodeURIComponent(modelUrl) +
-              "&mode=ar_only" +
-              "#Intent;" +
-              "scheme=https;" +
-              "package=com.google.ar.core;" +
-              "action=android.intent.action.VIEW;" +
-              "S.browser_fallback_url=" +
-              encodeURIComponent(window.location.href + "?fallback=true") +
-              ";" +
-              "end;";
+          // Создаем Intent URL для Google Scene Viewer
+          const intentUrl =
+            "intent://arvr.google.com/scene-viewer/1.0?" +
+            "file=" +
+            encodeURIComponent(modelUrl) +
+            "&mode=ar_only" +
+            "#Intent;" +
+            "scheme=https;" +
+            "package=com.google.ar.core;" +
+            "action=android.intent.action.VIEW;" +
+            "S.browser_fallback_url=" +
+            encodeURIComponent(window.location.href + "?fallback=true") +
+            ";" +
+            "end;";
 
-            console.log("Intent URL:", intentUrl);
+          console.log("Opening Android AR with URL:", intentUrl);
 
-            // Пытаемся открыть Scene Viewer
-            document.location.replace(intentUrl);
+          // Пытаемся открыть Scene Viewer
+          window.location.replace(intentUrl);
 
-            // Fallback если Scene Viewer не открылся
-            setTimeout(() => {
-              // Если мы все еще на этой странице через 1 секунду, Scene Viewer не сработал
-              if (window.location.href.indexOf("fallback=true") === -1) {
-                console.log("Scene Viewer likely failed, loading model-viewer");
-                loadModelViewer(gltfModel);
-              }
-            }, 1000);
-          } else {
-            console.log("Fallback mode - Scene Viewer failed or not installed");
-            loadModelViewer(gltfModel);
-          }
+          // Fallback таймер
+          setTimeout(() => {
+            if (!window.location.href.includes("fallback=true")) {
+              console.log("Scene Viewer not available, falling back");
+              showExistingViewer();
+            }
+          }, 1000);
+        }
+
+        // Основная логика
+        if (isIos) {
+          console.log("iOS device detected");
+          openIosAr();
+        } else if (isAndroid) {
+          console.log("Android device detected");
+          openAndroidAr();
         } else {
-          // Для других платформ (десктоп, другие мобильные ОС)
-          console.log("Other platform detected:", userAgent);
-          if (gltfModel) {
-            loadModelViewer(gltfModel);
-          }
+          // Для десктопов и других устройств
+          console.log("Non-mobile device detected, showing model-viewer");
+          showExistingViewer();
         }
 
-        // Функция загрузки резервного model-viewer
-        function loadModelViewer(gltfModel) {
-          if (!gltfModel) {
-            console.error("No GLTF model specified for model-viewer");
-            return;
-          }
-
-          console.log("Loading model-viewer fallback");
-
-          // Проверяем, не загружен ли model-viewer уже
-          if (
-            document.querySelector('script[src*="model-viewer.min.js"]') ||
-            (typeof customElements !== "undefined" &&
-              customElements.get("model-viewer"))
-          ) {
-            console.log("model-viewer already loaded");
-            createModelViewerElement(gltfModel);
-            return;
-          }
-
-          // Динамически загружаем model-viewer скрипт
-          const script = document.createElement("script");
-          script.type = "module";
-          script.src = "assets/js/model-viewer.min.js";
-
-          script.onload = function () {
-            console.log("model-viewer script loaded");
-            createModelViewerElement(gltfModel);
-          };
-
-          script.onerror = function () {
-            console.error("Failed to load model-viewer script");
-            // Альтернативное сообщение об ошибке
-            const errorMsg = document.createElement("div");
-            errorMsg.style.padding = "20px";
-            errorMsg.style.textAlign = "center";
-            errorMsg.style.color = "#666";
-            errorMsg.innerHTML =
-              "<h3>3D Viewer not available</h3><p>Please try on a compatible device or browser</p>";
-            document.body.appendChild(errorMsg);
-          };
-
-          document.head.appendChild(script);
-        }
-
-        // Функция создания элемента model-viewer
-        function createModelViewerElement(gltfModel) {
-          // Удаляем предыдущий viewer если есть
-          const oldViewer = document.querySelector("model-viewer");
-          if (oldViewer) {
-            document.body.removeChild(oldViewer);
-          }
-
-          const viewer = document.createElement("model-viewer");
-
-          // Устанавливаем атрибуты
-          viewer.setAttribute(
-            "src",
-            "assets/models/" + encodeURIComponent(gltfModel)
-          );
-          viewer.setAttribute("ar", "");
-          viewer.setAttribute("ar-modes", "scene-viewer webxr quick-look");
-          viewer.setAttribute("enable-pan", "");
-          viewer.setAttribute("auto-rotate", "");
-          viewer.setAttribute("camera-controls", "");
-          viewer.setAttribute("autoplay", "");
-
-          // Стили для лучшего отображения
-          viewer.style.width = "100%";
-          viewer.style.height = "500px";
-          viewer.style.maxHeight = "80vh";
-          viewer.style.margin = "0 auto";
-          viewer.style.display = "block";
-
-          // Добавляем на страницу
-          document.body.appendChild(viewer);
-
-          console.log("model-viewer element created");
-        }
+        // Также показываем model-viewer если пользователь явно хочет (например, кнопка "Показать в браузере")
+        window.showInBrowser = function () {
+          showExistingViewer();
+        };
       });
     </script>
+
+    <style>
+      /* Скрываем по умолчанию, показываем через JS */
+      model-viewer {
+        width: 100%;
+        height: 100vh;
+        display: none;
+      }
+
+      /* Стиль для кнопки fallback (опционально) */
+      .fallback-button {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        background: #4285f4;
+        color: white;
+        border: none;
+        border-radius: 24px;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 1000;
+        display: none;
+      }
+    </style>
+
+    <!-- Опциональная кнопка для ручного fallback -->
+    <button class="fallback-button" onclick="window.showInBrowser()">
+      View in Browser
+    </button>
   </body>
 </html>
