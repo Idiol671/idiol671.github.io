@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.js"></script>
+    <script
+      nomodule
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+    <title>VDNX</title>
+  </head>
+
+  <body>
+    <main class="main">
+      <div class="fill">
+        <model-viewer
+          camera-controls
+          ar
+          ar-modes="scene-viewer webxr quick-look"
+          autoplay
+          id="model"
+          alt="3D Model"
+          src="/assets/simple_horse_animation.glb"
+          ios-src="/assets/ios/Horse_animation.usdz"
+          enable-pan>
+          <!-- Скрываем по умолчанию -->
+        </model-viewer>
+      </div>
+    </main>
+
+    <style>
+      model-viewer {
+        width: 100%;
+        height: 100vh;
+      }
+    </style>
+  </body>
+</html>
