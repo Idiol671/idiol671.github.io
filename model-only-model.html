@@ -23,7 +23,7 @@
           id="model"
           alt="3D Model"
           src="/assets/simple_horse_animation.glb"
-          ios-src="/assets/ios/Horse_animation.usdz"
+          ios-src="Horse_animation.usdz"
           enable-pan>
           <!-- Скрываем по умолчанию -->
         </model-viewer>
@@ -36,5 +36,222 @@
         height: 100vh;
       }
     </style>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Определение ОС без библиотеки UAParser
+        const userAgent =
+          navigator.userAgent || navigator.vendor || window.opera;
+
+        // Определяем iOS
+        const isIos = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+
+        // Определяем Android
+        const isAndroid = /android/i.test(userAgent);
+
+        // Получаем данные из data-атрибутов body
+        const usdzModel = document.body.dataset.usdz;
+        const gltfModel = document.body.dataset.gltf;
+
+        if (isIos) {
+          console.log("iOS detected");
+
+          if (!usdzModel) {
+            console.error("USDZ model not specified in data-usdz attribute");
+            loadModelViewer(gltfModel);
+            return;
+          }
+
+          const url = "assets/ios/" + usdzModel;
+          console.log("USDZ URL:", url);
+
+          const a = document.createElement("a");
+          a.setAttribute("href", url);
+          document.body.appendChild(a);
+
+          // Проверяем поддержку AR (rel="ar")
+          let supportsAR = false;
+          try {
+            supportsAR =
+              a.relList && a.relList.supports && a.relList.supports("ar");
+          } catch (e) {
+            console.log("AR support check failed:", e);
+          }
+
+          if (supportsAR) {
+            a.setAttribute("rel", "ar");
+
+            // Минимальное прозрачное PNG изображение (1x1 пиксель)
+            const img = document.createElement("img");
+            img.setAttribute(
+              "src",
+              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+            );
+            img.style.display = "none";
+            a.appendChild(img);
+
+            console.log("AR Quick Look supported");
+          } else {
+            console.log("AR Quick Look not supported");
+          }
+
+          // Пытаемся открыть AR
+          setTimeout(() => {
+            a.click();
+
+            // Если AR не открылся, через некоторое время показываем fallback
+            setTimeout(() => {
+              if (document.body.contains(a)) {
+                console.log(
+                  "AR Quick Look likely failed, falling back to model-viewer"
+                );
+                document.body.removeChild(a);
+                loadModelViewer(gltfModel);
+              }
+            }, 1000);
+          }, 100);
+        } else if (isAndroid) {
+          console.log("Android detected");
+
+          if (!gltfModel) {
+            console.error("GLTF model not specified in data-gltf attribute");
+            loadModelViewer(gltfModel);
+            return;
+          }
+
+          // Проверяем параметр fallback в URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const hasFallback = urlParams.get("fallback") !== null;
+
+          if (!hasFallback) {
+            // Создаем base URL для моделей
+            const baseUrl = window.location.href.substring(
+              0,
+              window.location.href.lastIndexOf("/") + 1
+            );
+            const modelUrl =
+              baseUrl + "assets/models/" + encodeURIComponent(gltfModel);
+
+            // Intent URL для Google Scene Viewer
+            const intentUrl =
+              "intent://arvr.google.com/scene-viewer/1.0?" +
+              "file=" +
+              encodeURIComponent(modelUrl) +
+              "&mode=ar_only" +
+              "#Intent;" +
+              "scheme=https;" +
+              "package=com.google.ar.core;" +
+              "action=android.intent.action.VIEW;" +
+              "S.browser_fallback_url=" +
+              encodeURIComponent(window.location.href + "?fallback=true") +
+              ";" +
+              "end;";
+
+            console.log("Intent URL:", intentUrl);
+
+            // Пытаемся открыть Scene Viewer
+            document.location.replace(intentUrl);
+
+            // Fallback если Scene Viewer не открылся
+            setTimeout(() => {
+              // Если мы все еще на этой странице через 1 секунду, Scene Viewer не сработал
+              if (window.location.href.indexOf("fallback=true") === -1) {
+                console.log("Scene Viewer likely failed, loading model-viewer");
+                loadModelViewer(gltfModel);
+              }
+            }, 1000);
+          } else {
+            console.log("Fallback mode - Scene Viewer failed or not installed");
+            loadModelViewer(gltfModel);
+          }
+        } else {
+          // Для других платформ (десктоп, другие мобильные ОС)
+          console.log("Other platform detected:", userAgent);
+          if (gltfModel) {
+            loadModelViewer(gltfModel);
+          }
+        }
+
+        // Функция загрузки резервного model-viewer
+        function loadModelViewer(gltfModel) {
+          if (!gltfModel) {
+            console.error("No GLTF model specified for model-viewer");
+            return;
+          }
+
+          console.log("Loading model-viewer fallback");
+
+          // Проверяем, не загружен ли model-viewer уже
+          if (
+            document.querySelector('script[src*="model-viewer.min.js"]') ||
+            (typeof customElements !== "undefined" &&
+              customElements.get("model-viewer"))
+          ) {
+            console.log("model-viewer already loaded");
+            createModelViewerElement(gltfModel);
+            return;
+          }
+
+          // Динамически загружаем model-viewer скрипт
+          const script = document.createElement("script");
+          script.type = "module";
+          script.src = "assets/js/model-viewer.min.js";
+
+          script.onload = function () {
+            console.log("model-viewer script loaded");
+            createModelViewerElement(gltfModel);
+          };
+
+          script.onerror = function () {
+            console.error("Failed to load model-viewer script");
+            // Альтернативное сообщение об ошибке
+            const errorMsg = document.createElement("div");
+            errorMsg.style.padding = "20px";
+            errorMsg.style.textAlign = "center";
+            errorMsg.style.color = "#666";
+            errorMsg.innerHTML =
+              "<h3>3D Viewer not available</h3><p>Please try on a compatible device or browser</p>";
+            document.body.appendChild(errorMsg);
+          };
+
+          document.head.appendChild(script);
+        }
+
+        // Функция создания элемента model-viewer
+        function createModelViewerElement(gltfModel) {
+          // Удаляем предыдущий viewer если есть
+          const oldViewer = document.querySelector("model-viewer");
+          if (oldViewer) {
+            document.body.removeChild(oldViewer);
+          }
+
+          const viewer = document.createElement("model-viewer");
+
+          // Устанавливаем атрибуты
+          viewer.setAttribute(
+            "src",
+            "assets/models/" + encodeURIComponent(gltfModel)
+          );
+          viewer.setAttribute("ar", "");
+          viewer.setAttribute("ar-modes", "scene-viewer webxr quick-look");
+          viewer.setAttribute("enable-pan", "");
+          viewer.setAttribute("auto-rotate", "");
+          viewer.setAttribute("camera-controls", "");
+          viewer.setAttribute("autoplay", "");
+
+          // Стили для лучшего отображения
+          viewer.style.width = "100%";
+          viewer.style.height = "500px";
+          viewer.style.maxHeight = "80vh";
+          viewer.style.margin = "0 auto";
+          viewer.style.display = "block";
+
+          // Добавляем на страницу
+          document.body.appendChild(viewer);
+
+          console.log("model-viewer element created");
+        }
+      });
+    </script>
   </body>
 </html>
