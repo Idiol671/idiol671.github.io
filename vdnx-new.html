@@ -1084,7 +1084,7 @@
         setTimeout(() => {
 
           // Если ios и хром или Яндекс, открываем напрямую ar режим
-          let iosModelUrl = "/assets/model/simple_horse_animation.glb";
+          let iosModelUrl = "./assets/models/Horse_animation.usdz";
           let droidModelUrl = "https://idiol671.github.io/assets/model/simple_horse_animation.glb";
           
           const ua = navigator.userAgent;
@@ -1096,14 +1096,7 @@
             const a = document.createElement('a');
             a.setAttribute('href', iosModelUrl);
             document.body.appendChild(a);
-            if (a.relList.supports('ar')) {
-              a.setAttribute('rel', 'ar');
-              const img = document.createElement('img');
-              img.setAttribute('src',
-                  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=='
-              );
-              a.appendChild(img);
-            }
+            a.setAttribute('rel', 'ar');
             a.click();
             return;
           }
