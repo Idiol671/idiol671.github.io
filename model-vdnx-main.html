@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
@@ -13,7 +13,7 @@
     <main class="main">
       <div class="fill">
         <div class="back">
-          <img src="./logo.svg" alt="Логотип" class="back__logo" />
+          <img src="/assets/logo.svg" alt="Логотип" class="back__logo" />
         </div>
 
         <div class="scene" id="camera-wrapper" style="display: none">
@@ -21,14 +21,14 @@
 
           <!-- Убираем camera-controls чтобы управлять через свои обработчики -->
           <model-viewer
-            id="model"
-            alt="3D Model"
-            src="./model/Horse_animation.gltf"
-            ios-src="./ios/Horse_animation.usdz"
             camera-controls
             ar
-            ar-modes="webxr scene-viewer quick-look"
+            ar-modes="scene-viewer webxr quick-look"
             autoplay
+            id="model"
+            alt="3D Model"
+            src="/assets/model/horse_1.glb"
+            ios-src="/assets/model/horse_1.usdz"
             enable-pan
             style="display: none">
             <!-- Скрываем по умолчанию -->
@@ -39,9 +39,12 @@
           <!-- Контейнер для эффектов льда -->
           <div class="ice-overlay-container">
             <div class="ice-crack" id="iceCrack"></div>
-            <img class="ice-overlay active" id="filter1" src="./ice-1.png" />
-            <img class="ice-overlay" id="filter2" src="./ice-2.png" />
-            <img class="ice-overlay" id="filter3" src="./ice-4.png" />
+            <img
+              class="ice-overlay active"
+              id="filter1"
+              src="/assets/ice-1.png" />
+            <img class="ice-overlay" id="filter2" src="/assets/ice-2.png" />
+            <img class="ice-overlay" id="filter3" src="/assets/ice-4.png" />
           </div>
 
           <!-- Эффект снежинок -->
@@ -52,6 +55,34 @@
             <div class="loading-progress-bar" id="loadingProgressBar"></div>
           </div>
         </div>
+
+        <!-- <div class="alert" id="alert1">
+          <div class="alert-content">
+            <div class="alert-block">
+              <p class="alert__title">Внимание</p>
+              <p class="alert__text">
+                Для корректной работы программы <br />
+                откройте приложение в <br />
+                <span>Яндекс Браузер или Opera</span>
+              </p>
+              <button onclick="closeAlert1()" class="alert__close">Ок</button>
+            </div>
+          </div>
+        </div> -->
+
+        <!-- <div class="alert" id="alert2">
+          <div class="alert-content">
+            <div class="alert-block">
+              <p class="alert__title">Внимание</p>
+              <p class="alert__text">
+                Для корректной работы программы <br />
+                откройте приложение в <br />
+                <span>Safari или Google Chrome</span>
+              </p>
+              <button onclick="closeAlert2()" class="alert__close">Ок</button>
+            </div>
+          </div>
+        </div> -->
 
         <!-- МОДАЛКА ABOUT - ПОКАЗЫВАЕТСЯ ПЕРВОЙ -->
         <div class="about" id="aboutModal">
@@ -65,11 +96,41 @@
                   с символом 2026 года
                 </p>
               </div>
+              <img
+                src="/assets/about-map-horse.png"
+                alt=""
+                class="about-map-horse" />
               <!-- <p class="about-block__subtitle">
                 Начнем создавать праздник вместе!
               </p> -->
-              <img src="./about-map.png" alt="" class="about__img" />
+              <img src="/assets/about-map.png" alt="" class="about__img" />
               <button class="about__close" id="aboutBtn">ПРОДОЛЖИТЬ</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="gift" id="giftModal">
+          <div class="gift-content">
+            <div class="gift-block">
+              <img src="/assets/gift.png" alt="" class="gift__decoration" />
+              <p class="gift__title">Начнем создавать праздник вместе</p>
+              <p class="gift__text">
+                Опубликуйте видео на своей <br />
+                открытой страничке в VK<br />
+                с хештегом <span> #елка_метавднх</span><br />
+                и посетите павильон<br />
+                «Умный город» для получения<br />
+                новогоднего сувенира
+              </p>
+            </div>
+            <div class="gift-block gift-block--2">
+              <img src="/assets/map.png" alt="" class="gift__img" />
+              <div class="gift-bottom">
+                <p class="gift-bottom__text">
+                  Призы получат первые <span>1000</span> человек
+                </p>
+                <button class="gift__close" id="giftBtn">ПРОДОЛЖИТЬ</button>
+              </div>
             </div>
           </div>
         </div>
@@ -150,7 +211,10 @@
                   </p>
                 </div>
               </div>
-              <img src="./instruction.png" alt="" class="instruction__img" />
+              <img
+                src="/assets/instruction.png"
+                alt=""
+                class="instruction__img" />
               <p class="instruction__subtitle">
                 <span>Зажмите</span> кнопку <br />
                 для записи видео
@@ -190,9 +254,30 @@
     </main>
 
     <style>
+      @font-face {
+        font-family: "GolosText";
+        src: url("./assets/Golos/GolosText-Regular.ttf") format("truetype");
+        font-style: normal;
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: "GolosText";
+        src: url("./assets/Golos/GolosText-DemiBold.ttf") format("truetype");
+        font-style: normal;
+        font-weight: 600;
+      }
+
+      @font-face {
+        font-family: "GolosText";
+        src: url("./assets/Golos/golos-text_bold.ttf") format("truetype");
+        font-style: normal;
+        font-weight: 700;
+      }
+
       * {
         box-sizing: border-box;
         -webkit-tap-highlight-color: transparent;
+        font-family: "GolosText";
       }
 
       body {
@@ -211,7 +296,7 @@
         height: 100dvh;
         display: flex;
         flex-direction: column;
-        background: url("./background.png");
+        background: url("./assets/background.png");
         background-repeat: repeat;
         background-size: cover;
       }
@@ -271,7 +356,8 @@
         height: 100%;
         object-fit: cover;
         mix-blend-mode: screen;
-        transition: opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1),
+        transition:
+          opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1),
           filter 3s cubic-bezier(0.4, 0, 0.2, 1),
           transform 3s cubic-bezier(0.4, 0, 0.2, 1);
         opacity: 0;
@@ -392,7 +478,9 @@
         min-width: 200px;
         text-align: center;
         font-family: inherit;
-        transition: opacity 1s ease 2s, visibility 1s ease 2s,
+        transition:
+          opacity 1s ease 2s,
+          visibility 1s ease 2s,
           transform 0.3s ease;
         opacity: 0;
         visibility: hidden;
@@ -578,7 +666,7 @@
         padding-bottom: 80px;
       }
       .about-block {
-        padding: 12px 16px;
+        padding: 24px 11px;
         background: #fff;
         width: 100%;
         border-radius: 16px;
@@ -587,12 +675,21 @@
       }
       .about__title {
         font-weight: 700;
-        font-size: 20px;
+        font-size: 22px;
+        line-height: 100%;
         text-align: center;
         color: #4257c2;
         margin: 0;
         position: relative;
         z-index: 1;
+        text-transform: uppercase;
+      }
+      .about-map-horse {
+        position: absolute;
+        z-index: 2;
+        width: 156px;
+        transform: rotate(15deg);
+        top: 130px;
       }
       .about__title span {
         color: #4257c2;
@@ -662,7 +759,77 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        min-height: 468px;
+        min-height: 577px;
+      }
+
+      .alert {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000000;
+        overflow: auto;
+        padding: 100px 20px 40px 20px;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+      }
+      .alert-content {
+        margin: 20px;
+        max-width: 336px;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 33px;
+        padding-bottom: 80px;
+      }
+      .alert-block {
+        padding: 24px 16px 32px 16px;
+        background: #fff;
+        width: 100%;
+        border-radius: 16px;
+        position: relative;
+        z-index: 1;
+      }
+      .alert__title {
+        font-weight: 700;
+        font-size: 20px;
+        text-align: center;
+        color: #4257c2;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+      }
+      .alert__text {
+        margin-top: 8px;
+        font-size: 16px;
+        color: #000000;
+        margin-bottom: 0;
+      }
+      .alert__text span {
+        font-weight: 700;
+      }
+      .alert__close {
+        margin-top: 16px;
+        height: 40px;
+        background: #2d41a3;
+        border-radius: 8px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        font-size: 14px;
+        text-align: center;
+        color: #fff;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        z-index: 1;
+        position: relative;
       }
 
       /* Instruction modal - ПОКАЗЫВАЕТСЯ ВТОРОЙ */
@@ -820,6 +987,118 @@
         border: none;
         cursor: pointer;
       }
+
+      .gift {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        overflow-y: auto;
+        padding: 100px 20px 40px 20px;
+        overflow-x: hidden;
+      }
+      .gift.show {
+        display: flex;
+      }
+      .gift-content {
+        margin: 20px;
+        max-width: 336px;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+        padding-bottom: 80px;
+      }
+      .gift-block {
+        padding: 25px 16px;
+        background: #fff;
+        width: 100%;
+        border-radius: 16px;
+        position: relative;
+        z-index: 1;
+      }
+      .gift-block--2 {
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        min-height: 327px;
+        overflow: hidden;
+      }
+      .gift__title {
+        font-weight: 700;
+        font-size: 22px;
+        text-transform: uppercase;
+        text-align: center;
+        color: #4257c2;
+        margin: 0;
+      }
+      .gift__text {
+        margin: 16px 0 0 0;
+        font-size: 16px;
+        letter-spacing: 0.02em;
+        text-align: center;
+        color: #000;
+        line-height: 120%;
+      }
+      .gift__text span {
+        font-weight: 700;
+        color: #f00;
+      }
+      .gift__decoration {
+        position: absolute;
+        right: -38px;
+        top: -17px;
+        width: 104px;
+      }
+      .gift__img {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        object-fit: cover;
+        left: 0;
+        top: 0;
+      }
+      .gift-bottom {
+        position: relative;
+        z-index: 1;
+        margin-top: auto;
+        width: 100%;
+      }
+      .gift-bottom__text {
+        font-weight: 400;
+        font-size: 13px;
+        text-align: center;
+        color: #2d41a3;
+      }
+      .gift-bottom__text span {
+        font-weight: 700;
+      }
+      .gift__close {
+        margin-top: 15px;
+        height: 47px;
+        background: #2d41a3;
+        border-radius: 8px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        font-size: 16px;
+        text-align: center;
+        color: #fff;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        z-index: 1;
+        position: relative;
+      }
     </style>
 
     <script>
@@ -839,10 +1118,12 @@
       const moreBtn = document.getElementById("moreBtn");
       const instructionModal = document.getElementById("instructionModal");
       const instructionCloseBtn = document.getElementById(
-        "instructionCloseBtn"
+        "instructionCloseBtn",
       );
       const aboutModal = document.getElementById("aboutModal");
       const aboutBtn = document.getElementById("aboutBtn");
+      const giftModal = document.getElementById("giftModal");
+      const giftBtn = document.getElementById("giftBtn");
       const treeModal = document.getElementById("treeModal");
       const treeCloseBtn = document.getElementById("treeCloseBtn");
 
@@ -855,10 +1136,68 @@
       let filtersCompleted = false;
       let instructionShown = false;
       let aboutShown = false;
+      let giftShown = false;
       let treeShownAfterAR = false;
       let autoArTriggered = false;
       let showTreeModalAfterFilters = false; // Новая переменная
 
+      // function isGoogleChromeAndroid() {
+      //   const ua = navigator.userAgent;
+
+      //   const isAndroid = /Android/i.test(ua);
+
+      //   // Chrome версия
+      //   const hasChrome = /Chrome\/[0-9.]+/i.test(ua);
+
+      //   // Google Chrome всегда указывает Google Inc.
+      //   const isGoogleVendor = navigator.vendor === "Google Inc.";
+
+      //   // Явно исключаем другие браузеры
+      //   const isNotOther =
+      //     !/SamsungBrowser|YaBrowser|OPR|Opera|EdgA|Edge|Brave|Vivaldi|DuckDuckGo/i.test(
+      //       ua
+      //     );
+
+      //   return isAndroid && hasChrome && isGoogleVendor && isNotOther;
+      // }
+
+      // function showAlertIfChromeAndroid() {
+      //   if (isGoogleChromeAndroid()) {
+      //     document.getElementById("alert1").style.display = "flex";
+      //     aboutModal.style.display = "none";
+      //   }
+      // }
+      // function closeAlert1() {
+      //   document.getElementById("alert1").style.display = "none";
+      // }
+
+      // function isYaIos() {
+      //   const ua = navigator.userAgent;
+
+      //   const isAndroid = /Android/i.test(ua);
+
+      //   const isYa = ua.search(/YaBrowser/) > 0;
+
+      //   const isNotOther =
+      //     !/SamsungBrowser|Chrome|OPR|Opera|EdgA|Edge|Brave|Vivaldi|DuckDuckGo/i.test(
+      //       ua
+      //     );
+
+      //   return !isAndroid && isYa && isNotOther;
+      // }
+      // function closeAlert2() {
+      //   document.getElementById("alert2").style.display = "none";
+      // }
+
+      // function showAlertIfYandexIos() {
+      //   if (isYaIos()) {
+      //     document.getElementById("alert2").style.display = "flex";
+      //     aboutModal.style.display = "none";
+      //   }
+      // }
+
+      // showAlertIfChromeAndroid();
+      // showAlertIfYandexIos();
       // Инициализация камеры
       // async function initCamera() {
       //   try {
@@ -956,6 +1295,18 @@
 
         // Показываем instruction модалку
         setTimeout(() => {
+          giftModal.style.display = "flex";
+          giftShown = true;
+        }, 300);
+      }
+      function closeGift() {
+        console.log("Закрываем about, показываем инструкцию");
+        giftModal.style.display = "none";
+        giftModal.classList.remove("show");
+        giftShown = true;
+
+        // Показываем instruction модалку
+        setTimeout(() => {
           instructionModal.style.display = "flex";
           instructionShown = true;
         }, 300);
@@ -1046,6 +1397,33 @@
 
         // Ждем пока модель станет полностью видимой
         setTimeout(() => {
+          // Если ios и хром или Яндекс, открываем напрямую ar режим
+          let iosModelUrl = "/assets/model/horse_1.usdz";
+          let droidModelUrl = "https://idiol671.github.io/model/horse_1.glb";
+
+          const ua = navigator.userAgent;
+          const isAndroid = /Android/i.test(ua);
+          const isChrome = /Chrome\/[0-9.]+/i.test(ua);
+          const isYa = ua.search(/YaBrowser/) > 0;
+
+          if (!isAndroid && isYa) {
+            const a = document.createElement("a");
+            a.setAttribute("href", iosModelUrl);
+            document.body.appendChild(a);
+            a.setAttribute("rel", "ar");
+            a.click();
+            return;
+          }
+
+          if (isAndroid) {
+            const a = document.createElement("a");
+            const hrefDroid = `intent://arvr.google.com/scene-viewer/1.0?file=${droidModelUrl}&mode=ar_only#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`;
+            a.setAttribute("href", hrefDroid);
+            document.body.appendChild(a);
+            a.click();
+            return;
+          }
+
           // Пробуем через API model-viewer
           if (modelViewer.activateAR) {
             console.log("Активируем AR через activateAR() API");
@@ -1058,7 +1436,7 @@
           const findAndClickArButton = () => {
             if (modelViewer.shadowRoot) {
               const arButton = modelViewer.shadowRoot.querySelector(
-                '.ar-button, [part="ar-button"], button'
+                '.ar-button, [part="ar-button"], button',
               );
               if (arButton) {
                 console.log("Кнопка AR найдена в shadow DOM, кликаем...");
@@ -1136,7 +1514,7 @@
                 // ВМЕСТО автоматического запуска AR - показываем tree модалку
                 if (!showTreeModalAfterFilters) {
                   console.log(
-                    "Показываем tree модалку после завершения фильтров"
+                    "Показываем tree модалку после завершения фильтров",
                   );
                   setTimeout(() => {
                     showTreeModal();
@@ -1189,12 +1567,12 @@
 
           console.log("AR не доступен в этом браузере");
           alert(
-            "AR режим недоступен в вашем браузере. Попробуйте Safari на iOS или Chrome на Android."
+            "AR режим недоступен в вашем браузере. Попробуйте Safari на iOS или Chrome на Android.",
           );
         } catch (error) {
           console.error("Ошибка при запуске AR:", error);
           alert(
-            "Не удалось запустить AR режим. Проверьте поддержку AR в вашем браузере."
+            "Не удалось запустить AR режим. Проверьте поддержку AR в вашем браузере.",
           );
         }
       }
@@ -1234,18 +1612,12 @@
 
       // Обработчики событий
       aboutBtn.addEventListener("click", closeAbout);
+      giftBtn.addEventListener("click", closeGift);
       instructionCloseBtn.addEventListener("click", closeInstruction);
       treeCloseBtn.addEventListener("click", closeTreeModal); // Теперь эта кнопка запускает AR
       filterClickArea.addEventListener("click", changeFilter);
       closeModalBtn.addEventListener("click", hideModal);
       moreBtn.addEventListener("click", hideModal);
-
-      // Закрытие модальных окон при клике на оверлей
-      aboutModal.addEventListener("click", (e) => {
-        if (e.target === aboutModal) {
-          closeAbout();
-        }
-      });
 
       instructionModal.addEventListener("click", (e) => {
         if (e.target === instructionModal) {
@@ -1273,7 +1645,7 @@
           console.log("Страница стала видимой - возможно выход из AR");
           if (wasInAR && filtersCompleted && !treeShownAfterAR) {
             console.log(
-              "Были в AR и фильтры завершены - показываем tree модалку"
+              "Были в AR и фильтры завершены - показываем tree модалку",
             );
             setTimeout(() => {
               showTreeModal();
