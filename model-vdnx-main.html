@@ -27,8 +27,7 @@
             autoplay
             id="model"
             alt="3D Model"
-            src="/assets/model/horse_1.glb"
-            ios-src="/assets/model/horse_1.usdz"
+            src="/assets/ice-tree/Pine_tree_ice.glb"
             enable-pan
             style="display: none">
             <!-- Скрываем по умолчанию -->
@@ -1398,8 +1397,9 @@
         // Ждем пока модель станет полностью видимой
         setTimeout(() => {
           // Если ios и хром или Яндекс, открываем напрямую ar режим
-          let iosModelUrl = "/assets/model/horse_1.usdz";
-          let droidModelUrl = "https://idiol671.github.io/model/horse_1.glb";
+          let iosModelUrl = "/assets/ice-tree/Pine_tree_ice.gltf";
+          let droidModelUrl =
+            "https://idiol671.github.io/ice-tree/Pine_tree_ice.glb";
 
           const ua = navigator.userAgent;
           const isAndroid = /Android/i.test(ua);
